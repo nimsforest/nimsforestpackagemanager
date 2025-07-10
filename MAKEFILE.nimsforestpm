@@ -1,0 +1,82 @@
+# NimsforestPM - Package Manager for Organizational Components
+# Run these commands from the tools/nimsforestpm directory
+
+.PHONY: nimsforestpm-hello nimsforestpm-init nimsforestpm-lint
+
+nimsforestpm-hello:
+	@echo "=== NimsforestPM System Check ==="
+	@echo "Checking system compatibility..."
+	@command -v git >/dev/null 2>&1 || { echo "Error: git is required but not installed." >&2; exit 1; }
+	@command -v make >/dev/null 2>&1 || { echo "Error: make is required but not installed." >&2; exit 1; }
+	@echo "✓ Git available"
+	@echo "✓ Make available"
+	@echo ""
+	@echo "NimsForest Organizational Intelligence Cycle:"
+	@echo "inbound communication → issues → work → improvements → new content → outbound communication"
+	@echo ""
+	@echo "Available components to install:"
+	@echo "  • nimsforestcommunication - Captures all inbound communication"
+	@echo "  • nimsforestwork          - Transforms communication into work items"
+	@echo "  • nimsforestorganization  - Maintains organizational structure"
+	@echo "  • nimsforestwebstack      - Enables outbound communication"
+	@echo ""
+	@echo "Next: Run 'make nimsforestpm-init' to set up component discovery"
+
+nimsforestpm-init:
+	@echo "=== NimsforestPM Initialization ==="
+	@echo "Setting up component discovery system..."
+	@mkdir -p ../../docs/nimsforest-components
+	@echo "# NimsForest Components" > ../../docs/nimsforest-components/README.md
+	@echo "" >> ../../docs/nimsforest-components/README.md
+	@echo "This directory tracks installed NimsForest components." >> ../../docs/nimsforest-components/README.md
+	@echo "" >> ../../docs/nimsforest-components/README.md
+	@echo "## Installed Components" >> ../../docs/nimsforest-components/README.md
+	@echo "" >> ../../docs/nimsforest-components/README.md
+	@echo "Run 'make nimsforestpm-lint' to see component status." >> ../../docs/nimsforest-components/README.md
+	@echo "✓ Component tracking directory created"
+	@echo "✓ Documentation structure initialized"
+	@echo ""
+	@echo "NimsforestPM ready! Install components by adding them as git submodules:"
+	@echo "  git submodule add https://github.com/nimsforest/nimsforestwork.git tools/nimsforestwork"
+	@echo "  git submodule add https://github.com/nimsforest/nimsforestcommunication.git tools/nimsforestcommunication"
+	@echo "  git submodule add https://github.com/nimsforest/nimsforestorganization.git tools/nimsforestorganization"
+	@echo "  git submodule add https://github.com/nimsforest/nimsforestwebstack.git tools/nimsforestwebstack"
+
+nimsforestpm-lint:
+	@echo "=== NimsforestPM Component Validation ==="
+	@echo "Checking installed components..."
+	@echo ""
+	@components_found=0; \
+	if [ -d "../../tools/nimsforestwork" ]; then \
+		echo "✓ nimsforestwork - Work management and tracking"; \
+		components_found=$$((components_found + 1)); \
+	else \
+		echo "✗ nimsforestwork - Not installed"; \
+	fi; \
+	if [ -d "../../tools/nimsforestcommunication" ]; then \
+		echo "✓ nimsforestcommunication - Communication intake system"; \
+		components_found=$$((components_found + 1)); \
+	else \
+		echo "✗ nimsforestcommunication - Not installed"; \
+	fi; \
+	if [ -d "../../tools/nimsforestorganization" ]; then \
+		echo "✓ nimsforestorganization - Organizational structure"; \
+		components_found=$$((components_found + 1)); \
+	else \
+		echo "✗ nimsforestorganization - Not installed"; \
+	fi; \
+	if [ -d "../../tools/nimsforestwebstack" ]; then \
+		echo "✓ nimsforestwebstack - Web presence and outbound communication"; \
+		components_found=$$((components_found + 1)); \
+	else \
+		echo "✗ nimsforestwebstack - Not installed"; \
+	fi; \
+	echo ""; \
+	echo "Components installed: $$components_found/4"; \
+	if [ $$components_found -eq 4 ]; then \
+		echo "🎉 Complete organizational intelligence cycle available!"; \
+	elif [ $$components_found -eq 0 ]; then \
+		echo "No components installed. Run component-specific init commands after adding them."; \
+	else \
+		echo "Partial installation. Add remaining components to complete the cycle."; \
+	fi
