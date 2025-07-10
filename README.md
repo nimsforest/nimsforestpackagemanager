@@ -6,14 +6,20 @@ NimsForest enables the core organizational funnel: **inbound communication → i
 
 ### 1. Add to your project
 ```bash
-git submodule add https://github.com/nimsforest/nimsforestpm.git tools/nimsforestpm
+git submodule add https://github.com/nimsforest/nimsforestpackagemanager.git tools/nimsforestpm
 ```
 
-### 2. Check compatibility and initialize
+### 2. Create your organizational workspace
 ```bash
-cd tools/nimsforestpm
+cd nimsforestpm
 make nimsforestpm-hello
-make nimsforestpm-init
+make nimsforestpm-create-organisation ORG_NAME=my-company
+```
+
+### 3. Install components and start organizing
+```bash
+cd ../my-company
+make nimsforestpm-install COMPONENTS=work,communication,organization
 ```
 
 ## Core Components
@@ -28,9 +34,23 @@ The four pillars of the organizational intelligence cycle:
 ## Commands
 
 ```bash
-make nimsforestpm-hello        # System compatibility check
-make nimsforestpm-init         # Initialize component discovery and setup
-make nimsforestpm-lint         # Validate installed components
+make nimsforestpm-hello                    # System compatibility check
+make nimsforestpm-create-organisation      # Create organizational workspace
+make nimsforestpm-install                  # Install specific components
+make nimsforestpm-addtomainmake            # Add nimsforestpm to main Makefile
+make nimsforestpm-test                     # Run comprehensive test suite
+make nimsforestpm-lint                     # Validate installed components
+```
+
+## Component Installation
+
+```bash
+# Install specific components
+make nimsforestpm-install COMPONENTS=work,communication
+make nimsforestpm-install COMPONENTS=organization,webstack
+
+# Install all components
+make nimsforestpm-install COMPONENTS=all
 ```
 
 ## Integration

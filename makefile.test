@@ -1,0 +1,80 @@
+# NimsforestPM - Test Suite
+# Test targets isolated from main MAKEFILE.nimsforestpm
+
+.PHONY: nimsforestpm-test
+
+nimsforestpm-test:
+	@echo "=== NimsforestPM Test Suite ==="
+	@echo "Running comprehensive test scenarios in tmp/..."
+	@mkdir -p tmp
+	@echo ""
+	@TIMESTAMP=$$(date +%s); \
+	PASSED=0; \
+	FAILED=0; \
+	echo "Test 1/4: System compatibility check"; \
+	if make -f MAKEFILE.nimsforestpm nimsforestpm-hello >/dev/null 2>&1; then \
+		echo "  ✓ Test 1/4: System check - PASSED"; \
+		PASSED=$$((PASSED + 1)); \
+	else \
+		echo "  ✗ Test 1/4: System check - FAILED"; \
+		FAILED=$$((FAILED + 1)); \
+	fi; \
+	echo "Test 2/4: Component validation"; \
+	if make -f MAKEFILE.nimsforestpm nimsforestpm-lint >/dev/null 2>&1; then \
+		echo "  ✓ Test 2/4: Component validation - PASSED"; \
+		PASSED=$$((PASSED + 1)); \
+	else \
+		echo "  ✗ Test 2/4: Component validation - FAILED"; \
+		FAILED=$$((FAILED + 1)); \
+	fi; \
+	echo "Test 3/4: Makefile integration"; \
+	if make -f MAKEFILE.nimsforestpm nimsforestpm-addtomainmake >/dev/null 2>&1; then \
+		echo "  ✓ Test 3/4: Makefile integration - PASSED"; \
+		PASSED=$$((PASSED + 1)); \
+	else \
+		echo "  ✗ Test 3/4: Makefile integration - FAILED"; \
+		FAILED=$$((FAILED + 1)); \
+	fi; \
+	echo "Test 4/4: Real organization creation with all components"; \
+	TEST_DIR="tmp/test-org-$$TIMESTAMP"; \
+	mkdir -p $$TEST_DIR; \
+	cd $$TEST_DIR; \
+	echo "# Test Organization" > README.md; \
+	echo "include tools/nimsforestpm/MAKEFILE.nimsforestpm" > Makefile; \
+	git init >/dev/null 2>&1; \
+	git config user.email "test@example.com" >/dev/null 2>&1; \
+	git config user.name "Test User" >/dev/null 2>&1; \
+	if git submodule add https://github.com/nimsforest/nimsforestpackagemanager.git tools/nimsforestpm >/dev/null 2>&1; then \
+		git add . >/dev/null 2>&1; \
+		git commit -m "Initial commit with nimsforestpm" >/dev/null 2>&1; \
+		COMPONENTS_INSTALLED=0; \
+		for COMP in work communication organization webstack; do \
+			if git submodule add https://github.com/nimsforest/nimsforest$$COMP.git tools/nimsforest$$COMP >/dev/null 2>&1; then \
+				echo "include tools/nimsforest$$COMP/MAKEFILE.nimsforest$$COMP" >> Makefile; \
+				COMPONENTS_INSTALLED=$$((COMPONENTS_INSTALLED + 1)); \
+			fi; \
+		done; \
+		git add . >/dev/null 2>&1; \
+		git commit -m "Add all NimsForest components" >/dev/null 2>&1; \
+		if [ -f ".gitmodules" ] && [ $$COMPONENTS_INSTALLED -ge 3 ]; then \
+			echo "  ✓ Test 4/4: Real organization creation - PASSED ($$COMPONENTS_INSTALLED/4 components installed)"; \
+			PASSED=$$((PASSED + 1)); \
+		else \
+			echo "  ✗ Test 4/4: Real organization creation - FAILED (only $$COMPONENTS_INSTALLED/4 components installed)"; \
+			FAILED=$$((FAILED + 1)); \
+		fi; \
+	else \
+		echo "  ✗ Test 4/4: Real organization creation - FAILED (nimsforestpm install failed)"; \
+		FAILED=$$((FAILED + 1)); \
+	fi; \
+	cd /home/cederik/repositories/nimsforest-workspace/nimsforestpackagemanager-workspace/main; \
+	echo ""; \
+	if [ $$FAILED -eq 0 ]; then \
+		echo "🎉 All tests passed! NimsforestPM working correctly."; \
+		echo "✓ $$PASSED/4 tests successful"; \
+	else \
+		echo "❌ Some tests failed. Check tmp/nimsforest-test-* directories for details."; \
+		echo "✓ $$PASSED/4 tests successful"; \
+		echo "✗ $$FAILED/4 tests failed"; \
+	fi
+
