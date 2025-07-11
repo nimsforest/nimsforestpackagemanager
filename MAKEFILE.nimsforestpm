@@ -67,16 +67,29 @@ nimsforestpm-create-organisation:
 	@mkdir -p $(ORG_NAME)-workspace/product-repositories
 	@mkdir -p $(ORG_NAME)-workspace/tools-repository
 	@echo "Creating organizational folder structure using nimsforestfolders..."
-	@MAKEFILE_DIR=$$(dirname "$$(realpath "$(firstword $(MAKEFILE_LIST))")"); \
-	make nimsforestfolders-create-folders \
-		JSON_FILE="$$MAKEFILE_DIR/docs/templates/nimsforest-organization-structure.json" \
-		BASE_PATH="$(ORG_NAME)-workspace/$(ORG_NAME)-repository/main"
+	@if command -v make >/dev/null 2>&1 && make -n nimsforestfolders-create-folders >/dev/null 2>&1; then \
+		MAKEFILE_DIR=$$(dirname "$$(realpath "$(firstword $(MAKEFILE_LIST))")"); \
+		TEMPLATE_PATH="$$MAKEFILE_DIR/../docs/templates/nimsforest-organization-structure.json"; \
+		if [ ! -f "$$TEMPLATE_PATH" ]; then \
+			TEMPLATE_PATH="../docs/templates/nimsforest-organization-structure.json"; \
+		fi; \
+		make nimsforestfolders-create-folders \
+			JSON_FILE="$$TEMPLATE_PATH" \
+			BASE_PATH="$(ORG_NAME)-workspace/$(ORG_NAME)-repository/main"; \
+	else \
+		echo "⚠️  nimsforestfolders not available - skipping folder structure creation"; \
+		echo "   Install nimsforestfolders or run 'make nimsforestpm-install COMPONENTS=folders' to create proper structure"; \
+	fi
 	@echo "Initializing git repositories..."
 	@cd $(ORG_NAME)-workspace/$(ORG_NAME)-repository && git init
 	@cd $(ORG_NAME)-workspace/tools-repository && git init
 	@echo "Creating organization README from template..."
 	@MAKEFILE_DIR=$$(dirname "$$(realpath "$(firstword $(MAKEFILE_LIST))")"); \
-	sed 's/{{ORG_NAME}}/$(ORG_NAME)/g' "$$MAKEFILE_DIR/docs/templates/organization-README.md" > $(ORG_NAME)-workspace/$(ORG_NAME)-repository/main/README.md
+	TEMPLATE_PATH="$$MAKEFILE_DIR/../docs/templates/organization-README.md"; \
+	if [ ! -f "$$TEMPLATE_PATH" ]; then \
+		TEMPLATE_PATH="../docs/templates/organization-README.md"; \
+	fi; \
+	sed 's/{{ORG_NAME}}/$(ORG_NAME)/g' "$$TEMPLATE_PATH" > $(ORG_NAME)-workspace/$(ORG_NAME)-repository/main/README.md
 	@echo "Adding nimsforestpm as submodule to tools-repository..."
 	@cd $(ORG_NAME)-workspace/tools-repository && git submodule add https://github.com/nimsforest/nimsforestpackagemanager.git nimsforest-components/nimsforestpm
 	@echo "Linking tools-repository to organization..."
@@ -111,8 +124,12 @@ nimsforestpm-add-product:
 	mkdir -p $$WORKSPACE_DIR/product-repositories/$(PRODUCT_NAME); \
 	cd $$WORKSPACE_DIR/product-repositories/$(PRODUCT_NAME) && git init; \
 	MAKEFILE_DIR=$$(dirname "$$(realpath "$(firstword $(MAKEFILE_LIST))")"); \
+	TEMPLATE_PATH="$$MAKEFILE_DIR/../docs/templates/nimsforest-product-structure.json"; \
+	if [ ! -f "$$TEMPLATE_PATH" ]; then \
+		TEMPLATE_PATH="../docs/templates/nimsforest-product-structure.json"; \
+	fi; \
 	make nimsforestfolders-create-folders \
-		JSON_FILE="$$MAKEFILE_DIR/docs/templates/nimsforest-product-structure.json" \
+		JSON_FILE="$$TEMPLATE_PATH" \
 		BASE_PATH="$$WORKSPACE_DIR/product-repositories/$(PRODUCT_NAME)"; \
 	echo "# $(PRODUCT_NAME) Product" > README.md; \
 	echo "" >> README.md; \
