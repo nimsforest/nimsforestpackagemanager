@@ -1,7 +1,39 @@
 # NimsforestPM - Package Manager for Organizational Components
 # Run these commands from the tools/nimsforestpm directory
 
-.PHONY: nimsforestpm-hello nimsforestpm-create-organisation nimsforestpm-install nimsforestpm-addtomainmake nimsforestpm-lint
+.PHONY: help nimsforestpm-hello nimsforestpm-create-organisation nimsforestpm-add-product nimsforestpm-install nimsforestpm-install-component nimsforestpm-install-folders nimsforestpm-addtomainmake nimsforestpm-lint nimsforestpackagemanager-hello nimsforestpackagemanager-create-organisation nimsforestpackagemanager-add-product nimsforestpackagemanager-install nimsforestpackagemanager-install-component nimsforestpackagemanager-install-folders nimsforestpackagemanager-addtomainmake nimsforestpackagemanager-lint
+
+help:
+	@echo "=== NimsforestPM - Package Manager for Organizational Components ==="
+	@echo ""
+	@echo "Core Commands:"
+	@echo "  help                              - Show this help message"
+	@echo "  nimsforestpm-hello               - System compatibility check"
+	@echo "  nimsforestpm-create-organisation - Create new organizational workspace"
+	@echo "  nimsforestpm-add-product         - Add product repository to organization"
+	@echo "  nimsforestpm-install             - Install NimsForest components"
+	@echo "  nimsforestpm-install-component   - Install specific component"
+	@echo "  nimsforestpm-addtomainmake       - Add NimsforestPM to main Makefile"
+	@echo "  nimsforestpm-lint                - Validate organizational structure"
+	@echo ""
+	@echo ""
+	@echo "Usage Examples:"
+	@echo "  make nimsforestpm-create-organisation ORG_NAME=my-company"
+	@echo "  make nimsforestpm-add-product PRODUCT_NAME=my-app PRODUCT_TYPE=software"
+	@echo "  make nimsforestpm-install COMPONENTS=work,communication,organization,webstack"
+	@echo ""
+	@echo "Aliases (same commands with longer prefix):"
+	@echo "  All commands also available with 'nimsforestpackagemanager-' prefix"
+	@echo ""
+	@echo "=== Included Tools Help ==="
+	@echo ""
+	@if command -v make >/dev/null 2>&1; then \
+		echo "NimsforestFolders:"; \
+		make nimsforestfolders-hello 2>/dev/null || echo "  nimsforestfolders not available"; \
+		echo ""; \
+	fi
+	@echo "For more detailed information, run individual help commands or visit:"
+	@echo "https://github.com/nimsforest/nimsforestpackagemanager"
 
 nimsforestpm-hello:
 	@echo "=== NimsforestPM System Check ==="
@@ -19,6 +51,7 @@ nimsforestpm-hello:
 	@echo "  • nimsforestwork          - Transforms communication into work items"
 	@echo "  • nimsforestorganization  - Maintains organizational structure"
 	@echo "  • nimsforestwebstack      - Enables outbound communication"
+	@echo "  • nimsforestfolders       - Advanced folder management system"
 	@echo ""
 	@echo "Next: Run 'make nimsforestpm-create-organisation ORG_NAME=my-company' to create your organization"
 
@@ -27,124 +60,243 @@ nimsforestpm-create-organisation:
 		echo "Error: ORG_NAME required. Usage: make nimsforestpm-create-organisation ORG_NAME=my-company"; \
 		exit 1; \
 	fi
-	@echo "=== Creating $(ORG_NAME) Organization ==="
-	@echo "Creating organizational workspace..."
-	@mkdir -p ../$(ORG_NAME)/tools
-	@cd ../$(ORG_NAME) && git init
-	@echo "# $(ORG_NAME) Organization" > ../$(ORG_NAME)/README.md
-	@echo "" >> ../$(ORG_NAME)/README.md
-	@echo "Organizational workspace powered by NimsForest components." >> ../$(ORG_NAME)/README.md
-	@echo "" >> ../$(ORG_NAME)/README.md
-	@echo "## Getting Started" >> ../$(ORG_NAME)/README.md
-	@echo "" >> ../$(ORG_NAME)/README.md
-	@echo "Install components with:" >> ../$(ORG_NAME)/README.md
-	@echo "\`\`\`bash" >> ../$(ORG_NAME)/README.md
-	@echo "make nimsforestpm-install COMPONENTS=work,communication" >> ../$(ORG_NAME)/README.md
-	@echo "\`\`\`" >> ../$(ORG_NAME)/README.md
-	@echo "Adding nimsforestpm as submodule..."
-	@cd ../$(ORG_NAME) && git submodule add https://github.com/nimsforest/nimsforestpackagemanager.git tools/nimsforestpm
+	@echo "=== Creating $(ORG_NAME) Organization Workspace ==="
+	@echo "Creating organizational workspace structure..."
+	@mkdir -p $(ORG_NAME)-workspace
+	@mkdir -p $(ORG_NAME)-workspace/$(ORG_NAME)-repository/main
+	@mkdir -p $(ORG_NAME)-workspace/product-repositories
+	@mkdir -p $(ORG_NAME)-workspace/tools-repository
+	@echo "Creating organizational folder structure using nimsforestfolders..."
+	@MAKEFILE_DIR=$$(dirname "$$(realpath "$(firstword $(MAKEFILE_LIST))")"); \
+	make nimsforestfolders-create-folders \
+		JSON_FILE="$$MAKEFILE_DIR/docs/templates/nimsforest-organization-structure.json" \
+		BASE_PATH="$(ORG_NAME)-workspace/$(ORG_NAME)-repository/main"
+	@echo "Initializing git repositories..."
+	@cd $(ORG_NAME)-workspace/$(ORG_NAME)-repository && git init
+	@cd $(ORG_NAME)-workspace/tools-repository && git init
+	@echo "Creating organization README from template..."
+	@MAKEFILE_DIR=$$(dirname "$$(realpath "$(firstword $(MAKEFILE_LIST))")"); \
+	sed 's/{{ORG_NAME}}/$(ORG_NAME)/g' "$$MAKEFILE_DIR/docs/templates/organization-README.md" > $(ORG_NAME)-workspace/$(ORG_NAME)-repository/main/README.md
+	@echo "Adding nimsforestpm as submodule to tools-repository..."
+	@cd $(ORG_NAME)-workspace/tools-repository && git submodule add https://github.com/nimsforest/nimsforestpackagemanager.git nimsforest-components/nimsforestpm
+	@echo "Linking tools-repository to organization..."
+	@cd $(ORG_NAME)-workspace/$(ORG_NAME)-repository && git submodule add ../tools-repository main/tools/shared
 	@echo "Creating organization Makefile..."
-	@echo "# $(ORG_NAME) Organization Makefile" > ../$(ORG_NAME)/Makefile
-	@echo "# Include NimsForest Package Manager" >> ../$(ORG_NAME)/Makefile
-	@echo "" >> ../$(ORG_NAME)/Makefile
-	@echo "include tools/nimsforestpm/MAKEFILE.nimsforestpm" >> ../$(ORG_NAME)/Makefile
-	@cd ../$(ORG_NAME) && git add .
-	@cd ../$(ORG_NAME) && git commit -m "Initial $(ORG_NAME) organization setup"
-	@echo "✓ $(ORG_NAME) organization created successfully!"
+	@echo "# $(ORG_NAME) Organization Makefile" > $(ORG_NAME)-workspace/$(ORG_NAME)-repository/main/Makefile
+	@echo "# Include NimsForest Package Manager" >> $(ORG_NAME)-workspace/$(ORG_NAME)-repository/main/Makefile
+	@echo "" >> $(ORG_NAME)-workspace/$(ORG_NAME)-repository/main/Makefile
+	@echo "include tools/shared/nimsforest-components/nimsforestpm/MAKEFILE.nimsforestpm" >> $(ORG_NAME)-workspace/$(ORG_NAME)-repository/main/Makefile
+	@cd $(ORG_NAME)-workspace/$(ORG_NAME)-repository && git add .
+	@cd $(ORG_NAME)-workspace/$(ORG_NAME)-repository && git commit -m "Initial $(ORG_NAME) organization setup"
+	@cd $(ORG_NAME)-workspace/tools-repository && git add .
+	@cd $(ORG_NAME)-workspace/tools-repository && git commit -m "Initial tools repository setup"
+	@echo "✓ $(ORG_NAME) organization workspace created successfully!"
 	@echo ""
 	@echo "Next steps:"
-	@echo "  cd ../$(ORG_NAME)"
+	@echo "  cd $(ORG_NAME)-workspace/$(ORG_NAME)-repository/main"
 	@echo "  make nimsforestpm-install COMPONENTS=work,communication,organization,webstack"
+
+nimsforestpm-add-product:
+	@if [ -z "$(PRODUCT_NAME)" ]; then \
+		echo "Error: PRODUCT_NAME required. Usage: make nimsforestpm-add-product PRODUCT_NAME=my-product PRODUCT_TYPE=software"; \
+		exit 1; \
+	fi
+	@if [ -z "$(PRODUCT_TYPE)" ]; then \
+		echo "Error: PRODUCT_TYPE required. Options: software, hardware, service"; \
+		exit 1; \
+	fi
+	@echo "=== Adding $(PRODUCT_NAME) Product ==="
+	@echo "Creating product repository..."
+	@WORKSPACE_DIR=$$(pwd | sed 's|/[^/]*-repository.*||'); \
+	mkdir -p $$WORKSPACE_DIR/product-repositories/$(PRODUCT_NAME); \
+	cd $$WORKSPACE_DIR/product-repositories/$(PRODUCT_NAME) && git init; \
+	MAKEFILE_DIR=$$(dirname "$$(realpath "$(firstword $(MAKEFILE_LIST))")"); \
+	make nimsforestfolders-create-folders \
+		JSON_FILE="$$MAKEFILE_DIR/docs/templates/nimsforest-product-structure.json" \
+		BASE_PATH="$$WORKSPACE_DIR/product-repositories/$(PRODUCT_NAME)"; \
+	echo "# $(PRODUCT_NAME) Product" > README.md; \
+	echo "" >> README.md; \
+	echo "Product Type: $(PRODUCT_TYPE)" >> README.md; \
+	echo "" >> README.md; \
+	echo "## Structure" >> README.md; \
+	echo "- **actors/**: Entities involved in this product" >> README.md; \
+	echo "- **assets/**: Product-specific resources" >> README.md; \
+	echo "- **tools/**: Product development tools" >> README.md; \
+	echo "- **products/**: Product deliverables" >> README.md; \
+	git add .; \
+	git commit -m "Initial $(PRODUCT_NAME) product setup"
+	@echo "Adding product as submodule to organization..."
+	@WORKSPACE_DIR=$$(pwd | sed 's|/[^/]*-repository.*||'); \
+	ORG_REPO=$$(basename $$WORKSPACE_DIR | sed 's/-workspace$$/-repository/'); \
+	cd $$WORKSPACE_DIR/$$ORG_REPO && git submodule add ../product-repositories/$(PRODUCT_NAME) main/products/$(PRODUCT_NAME)
+	@echo "✓ $(PRODUCT_NAME) product added successfully!"
+	@echo ""
+	@echo "Product location: ../product-repositories/$(PRODUCT_NAME)"
+	@echo "Linked to organization at: main/products/$(PRODUCT_NAME)"
 
 nimsforestpm-addtomainmake:
 	@echo "=== Adding NimsforestPM to Main Makefile ==="
-	@if [ ! -f "../../Makefile" ]; then \
+	@if [ ! -f "Makefile" ]; then \
 		echo "Creating main Makefile..."; \
-		echo "# Main Project Makefile" > ../../Makefile; \
-		echo "" >> ../../Makefile; \
+		echo "# Main Project Makefile" > Makefile; \
+		echo "" >> Makefile; \
 	fi
-	@if ! grep -q "MAKEFILE.nimsforestpm" ../../Makefile; then \
+	@MAKEFILE_DIR=$$(dirname "$$(realpath "$(MAKEFILE_LIST)")"); \
+	RELATIVE_PATH=$$(realpath --relative-to="." "$$MAKEFILE_DIR/MAKEFILE.nimsforestpm"); \
+	if ! grep -q "MAKEFILE.nimsforestpm" Makefile; then \
 		echo "Adding nimsforestpm to main Makefile..."; \
-		echo "include tools/nimsforestpm/MAKEFILE.nimsforestpm" >> ../../Makefile; \
+		echo "include $$RELATIVE_PATH" >> Makefile; \
 		echo "✓ NimsforestPM commands available in main Makefile"; \
 	else \
 		echo "✓ NimsforestPM already integrated in main Makefile"; \
 	fi
 
+nimsforestpm-install-component:
+	@if [ -z "$(COMPONENT)" ]; then \
+		echo "Error: COMPONENT required. Usage: make nimsforestpm-install-component COMPONENT=nimsforestwork"; \
+		echo "Available components: nimsforestwork, nimsforestcommunication, nimsforestorganization, nimsforestwebstack, nimsforestfolders"; \
+		exit 1; \
+	fi
+	@echo "=== Installing $(COMPONENT) ==="
+	@echo "Adding $(COMPONENT) as submodule..."
+	@if [ -d "tools/shared/nimsforest-components" ]; then \
+		cd tools/shared/nimsforest-components && git submodule add https://github.com/nimsforest/$(COMPONENT).git $(COMPONENT); \
+		echo "include tools/shared/nimsforest-components/$(COMPONENT)/MAKEFILE.$(COMPONENT)" >> Makefile; \
+	elif [ -d "tools/nimsforest-components" ]; then \
+		cd tools/nimsforest-components && git submodule add https://github.com/nimsforest/$(COMPONENT).git $(COMPONENT); \
+		echo "include tools/nimsforest-components/$(COMPONENT)/MAKEFILE.$(COMPONENT)" >> Makefile; \
+	elif [ -d "tools" ]; then \
+		cd tools && git submodule add https://github.com/nimsforest/$(COMPONENT).git $(COMPONENT); \
+		echo "include tools/$(COMPONENT)/MAKEFILE.$(COMPONENT)" >> Makefile; \
+	else \
+		echo "Error: No tools directory found. Run from organization repository."; \
+		exit 1; \
+	fi
+	@echo "✓ $(COMPONENT) installed successfully!"
+	@echo "Initialize with: make $(COMPONENT)-init"
+
 nimsforestpm-install:
 	@if [ -z "$(COMPONENTS)" ]; then \
 		echo "Error: COMPONENTS required. Usage: make nimsforestpm-install COMPONENTS=work,communication"; \
-		echo "Available components: work, communication, organization, webstack, all"; \
+		echo "Available components: work, communication, organization, webstack, folders, all"; \
 		exit 1; \
 	fi
 	@echo "=== Installing NimsForest Components ==="
 	@echo "Installing: $(COMPONENTS)"
 	@echo ""
 	@if echo "$(COMPONENTS)" | grep -q "work\|all"; then \
-		echo "Installing nimsforestwork..."; \
-		git submodule add https://github.com/nimsforest/nimsforestwork.git tools/nimsforestwork; \
-		echo "include tools/nimsforestwork/MAKEFILE.nimsforestwork" >> Makefile; \
+		make nimsforestpm-install-component COMPONENT=nimsforestwork; \
 	fi
 	@if echo "$(COMPONENTS)" | grep -q "communication\|all"; then \
-		echo "Installing nimsforestcommunication..."; \
-		git submodule add https://github.com/nimsforest/nimsforestcommunication.git tools/nimsforestcommunication; \
-		echo "include tools/nimsforestcommunication/MAKEFILE.nimsforestcommunication" >> Makefile; \
+		make nimsforestpm-install-component COMPONENT=nimsforestcommunication; \
 	fi
 	@if echo "$(COMPONENTS)" | grep -q "organization\|all"; then \
-		echo "Installing nimsforestorganization..."; \
-		git submodule add https://github.com/nimsforest/nimsforestorganization.git tools/nimsforestorganization; \
-		echo "include tools/nimsforestorganization/MAKEFILE.nimsforestorganization" >> Makefile; \
+		make nimsforestpm-install-component COMPONENT=nimsforestorganization; \
 	fi
 	@if echo "$(COMPONENTS)" | grep -q "webstack\|all"; then \
-		echo "Installing nimsforestwebstack..."; \
-		git submodule add https://github.com/nimsforest/nimsforestwebstack.git tools/nimsforestwebstack; \
-		echo "include tools/nimsforestwebstack/MAKEFILE.nimsforestwebstack" >> Makefile; \
+		make nimsforestpm-install-component COMPONENT=nimsforestwebstack; \
+	fi
+	@if echo "$(COMPONENTS)" | grep -q "folders\|all"; then \
+		make nimsforestpm-install-component COMPONENT=nimsforestfolders; \
 	fi
 	@echo ""
-	@echo "✓ Components installed successfully!"
+	@echo "✓ All requested components installed successfully!"
 	@echo "Initialize components with their respective init commands:"
 	@if echo "$(COMPONENTS)" | grep -q "work\|all"; then echo "  make nimsforestwork-init"; fi
 	@if echo "$(COMPONENTS)" | grep -q "communication\|all"; then echo "  make nimsforestcommunication-init"; fi
 	@if echo "$(COMPONENTS)" | grep -q "organization\|all"; then echo "  make nimsforestorganization-init"; fi
 	@if echo "$(COMPONENTS)" | grep -q "webstack\|all"; then echo "  make nimsforestwebstack-init"; fi
+	@if echo "$(COMPONENTS)" | grep -q "folders\|all"; then echo "  make nimsforestfolders-init"; fi
+
+nimsforestpm-install-folders:
+	@make nimsforestpm-install-component COMPONENT=nimsforestfolders
+	@echo "Advanced folder management commands are now available."
 
 nimsforestpm-lint:
-	@echo "=== NimsforestPM Component Validation ==="
-	@echo "Checking installed components..."
+	@echo "=== NimsforestPM Organization Validation ==="
+	@echo "Checking organizational structure..."
 	@echo ""
-	@BASE_PATH="."; \
-	if [ -d "../../tools" ]; then BASE_PATH="../.."; fi; \
-	components_found=0; \
-	if [ -d "$$BASE_PATH/tools/nimsforestwork" ]; then \
-		echo "✓ nimsforestwork - Work management and tracking"; \
-		components_found=$$((components_found + 1)); \
+	@WORKSPACE_DIR=$$(pwd | sed 's|/[^/]*-repository.*||'); \
+	if [ -d "$$WORKSPACE_DIR" ]; then \
+		echo "✓ Workspace structure detected"; \
+		echo "Validating folder structure against template..."; \
+		MAKEFILE_DIR=$$(dirname "$$(realpath "$(firstword $(MAKEFILE_LIST))")"); \
+		make nimsforestfolders-lint JSON_FILE="$$MAKEFILE_DIR/docs/templates/nimsforest-organization-structure.json" BASE_PATH="." || \
+		echo "⚠️  nimsforestfolders-lint not available - cannot validate structure against template"; \
+		echo ""; \
+		echo "Checking installed components..."; \
+		components_found=0; \
+		if [ -d "tools/shared/nimsforest-components/nimsforestwork" ]; then \
+			echo "✓ nimsforestwork - Work management and tracking"; \
+			components_found=$$((components_found + 1)); \
+		else \
+			echo "✗ nimsforestwork - Not installed"; \
+		fi; \
+		if [ -d "tools/shared/nimsforest-components/nimsforestcommunication" ]; then \
+			echo "✓ nimsforestcommunication - Communication intake system"; \
+			components_found=$$((components_found + 1)); \
+		else \
+			echo "✗ nimsforestcommunication - Not installed"; \
+		fi; \
+		if [ -d "tools/shared/nimsforest-components/nimsforestorganization" ]; then \
+			echo "✓ nimsforestorganization - Organizational structure"; \
+			components_found=$$((components_found + 1)); \
+		else \
+			echo "✗ nimsforestorganization - Not installed"; \
+		fi; \
+		if [ -d "tools/shared/nimsforest-components/nimsforestwebstack" ]; then \
+			echo "✓ nimsforestwebstack - Web presence and outbound communication"; \
+			components_found=$$((components_found + 1)); \
+		else \
+			echo "✗ nimsforestwebstack - Not installed"; \
+		fi; \
+		if [ -d "tools/shared/nimsforest-components/nimsforestfolders" ]; then \
+			echo "✓ nimsforestfolders - Advanced folder management system"; \
+			components_found=$$((components_found + 1)); \
+		else \
+			echo "✗ nimsforestfolders - Not installed"; \
+		fi; \
+		echo ""; \
+		echo "Components installed: $$components_found/5"; \
+		if [ $$components_found -eq 5 ]; then \
+			echo "🎉 Complete organizational intelligence cycle with advanced folder management available!"; \
+		elif [ $$components_found -eq 4 ]; then \
+			echo "🎉 Complete organizational intelligence cycle available! Add folders for advanced management."; \
+		elif [ $$components_found -eq 0 ]; then \
+			echo "No components installed. Use 'make nimsforestpm-install COMPONENTS=...' to add them."; \
+		else \
+			echo "Partial installation. Add remaining components to complete the cycle."; \
+		fi; \
+		echo ""; \
+		echo "Checking products..."; \
+		if [ -d "$$WORKSPACE_DIR/product-repositories" ]; then \
+			product_count=$$(ls -1 $$WORKSPACE_DIR/product-repositories | wc -l); \
+			echo "Products found: $$product_count"; \
+			if [ $$product_count -gt 0 ]; then \
+				ls -1 $$WORKSPACE_DIR/product-repositories | sed 's/^/  - /'; \
+			fi; \
+		else \
+			echo "No product repositories found"; \
+		fi; \
 	else \
-		echo "✗ nimsforestwork - Not installed"; \
-	fi; \
-	if [ -d "$$BASE_PATH/tools/nimsforestcommunication" ]; then \
-		echo "✓ nimsforestcommunication - Communication intake system"; \
-		components_found=$$((components_found + 1)); \
-	else \
-		echo "✗ nimsforestcommunication - Not installed"; \
-	fi; \
-	if [ -d "$$BASE_PATH/tools/nimsforestorganization" ]; then \
-		echo "✓ nimsforestorganization - Organizational structure"; \
-		components_found=$$((components_found + 1)); \
-	else \
-		echo "✗ nimsforestorganization - Not installed"; \
-	fi; \
-	if [ -d "$$BASE_PATH/tools/nimsforestwebstack" ]; then \
-		echo "✓ nimsforestwebstack - Web presence and outbound communication"; \
-		components_found=$$((components_found + 1)); \
-	else \
-		echo "✗ nimsforestwebstack - Not installed"; \
-	fi; \
-	echo ""; \
-	echo "Components installed: $$components_found/4"; \
-	if [ $$components_found -eq 4 ]; then \
-		echo "🎉 Complete organizational intelligence cycle available!"; \
-	elif [ $$components_found -eq 0 ]; then \
-		echo "No components installed. Use 'make nimsforestpm-install COMPONENTS=...' to add them."; \
-	else \
-		echo "Partial installation. Add remaining components to complete the cycle."; \
+		echo "✗ Not in a NimsForest workspace structure"; \
+		echo "Run 'make nimsforestpm-create-organisation ORG_NAME=...' to create one"; \
 	fi
+
+# Aliases with nimsforestpackagemanager- prefix
+nimsforestpackagemanager-hello: nimsforestpm-hello
+
+nimsforestpackagemanager-create-organisation: nimsforestpm-create-organisation
+
+nimsforestpackagemanager-add-product: nimsforestpm-add-product
+
+nimsforestpackagemanager-install: nimsforestpm-install
+
+nimsforestpackagemanager-install-component: nimsforestpm-install-component
+
+nimsforestpackagemanager-install-folders: nimsforestpm-install-folders
+
+nimsforestpackagemanager-addtomainmake: nimsforestpm-addtomainmake
+
+nimsforestpackagemanager-lint: nimsforestpm-lint
+

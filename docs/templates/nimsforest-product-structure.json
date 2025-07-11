@@ -1,0 +1,20 @@
+{
+  "organization": {
+    "actors": {
+      "nims": [],
+      "humans": [],
+      "machines": [
+        "mobile",
+        "fixed"
+      ]
+    },
+    "assets": {
+      "documentation": [],
+      "data": [],
+      "media": [],
+      "templates": []
+    },
+    "tools": [],
+    "products": []
+  }
+}
