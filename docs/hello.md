@@ -32,17 +32,17 @@ Organizations exist to continuously **organize** themselves better so they can *
 ## Quick Start
 
 ```bash
-# Clone and install nimsforest package manager
+# Install NimsForest PM
 git clone https://github.com/nimsforest/nimsforest-pm
 cd nimsforest-pm
 make install
 
-# Bootstrap a new organization workspace
+# Bootstrap complete workspace structure
 nimsforest-pm bootstrap my-org-workspace
 
-# Or install tools individually
-nimsforest-pm install organize  # For organization architecture
-nimsforest-pm install productize # For product development
+# Or install tools individually  
+nimsforest-pm install organize    # For organization coordination
+nimsforest-pm install productize  # For product development
 ```
 
 ## What You Get
@@ -68,14 +68,14 @@ my-org-workspace/
 
 ## The Tools
 
+### nimsforest-pm
+Make and bash-based package manager that bootstraps complete workspace architecture and orchestrates the organize and productize tools. No dependencies beyond standard Unix tools.
+
 ### nimsforest-organize
-Creates event-driven organizational architecture with MECE structure for human coordination.
+Creates event-driven organizational coordination structure with MECE (Mutually Exclusive, Collectively Exhaustive) documentation system for human coordination.
 
 ### nimsforest-productize  
-Generates complete value stream repositories with integrated infrastructure, metrics, and feedback loops.
-
-### nimsforest-pm
-Make and bash-based package manager that orchestrates both tools and provides seamless integration. No dependencies beyond standard Unix tools.
+Generates complete value stream repositories with infrastructure as code, integrated metrics, feedback loops, and communication systems.
 
 ---
 
@@ -155,16 +155,18 @@ Following NixOS principles, all infrastructure is declarative, reproducible, and
 
 ## Getting Started
 
-1. **Bootstrap**: `nimsforest-pm bootstrap my-org-workspace` creates complete system
-2. **Define Purpose**: Start with value propositions in `/org-repository/docs/purpose/`
-3. **Create Products**: Use `nimsforestproductize-init` in `/products-workspace/` for each value stream
-4. **Establish Events**: Define how organization and products communicate
-5. **Measure Everything**: Track value creation at every level
+1. **Bootstrap**: `nimsforest-pm bootstrap my-org-workspace` creates complete workspace system
+2. **Initialize Organization**: `nimsforest-organize init` in `/org-repository/main/` 
+3. **Define Purpose**: Start with value propositions in `/org-repository/docs/purpose/`
+4. **Create Products**: `nimsforest-productize create <product-name>` in `/products-workspace/`
+5. **Initialize Products**: `nimsforest-productize init` in each product workspace
+6. **Establish Events**: Define how organization and products communicate
+7. **Measure Everything**: Track value creation at every level
 
 ## Daily Usage
 
-- Organizational changes update `/organize/` documentation
-- Product development happens in `/productize/` value streams  
+- Organizational changes update `/org-repository/docs/` coordination documentation
+- Product development happens in `/products-workspace/` value streams  
 - Events flow between organization and products automatically
 - Metrics aggregate from products to organizational dashboards
 
@@ -181,13 +183,13 @@ The system grows with your organization:
 
 ## Multi-Team Organizations
 
-- Each team can have its own `/organize/` documentation
-- Shared `/productize/` workspace with clear value stream ownership
+- Each team can have its own `/org-repository/docs/` coordination documentation
+- Shared `/products-workspace/` with clear value stream ownership
 - Event flows coordinate between teams automatically
 
 ## Platform Teams
 
-- Platform services live in `/productize/platform-services/`
+- Platform services live in `/products-workspace/platform-services/`
 - Internal tools follow same value stream structure as customer products
 - Infrastructure teams productize their coordination as reusable services
 
@@ -195,7 +197,7 @@ The system grows with your organization:
 
 - Repository federation for large organizations
 - Event aggregation across multiple organization repositories
-- Shared templates and patterns in `/productize/shared/`
+- Shared templates and patterns in `/products-workspace/shared/`
 
 ## Measurement
 
