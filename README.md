@@ -1,146 +1,182 @@
-# NimsforestPM - Package Manager for Organizational Components
+# NimsForest Package Manager
 
-NimsForest enables the core organizational funnel: **inbound communication → issues → work → improvements → new content → outbound communication → inbound communication**. NimsforestPM helps you discover and install the right components to build this complete organizational intelligence cycle.
+**Bootstrap Event & Value-Driven Organization Workspaces**
 
-## Quick Setup
+NimsForest PM creates workspaces where organizations can explicitly optimize their coordination (organize) and value creation (productize) in an endless improvement cycle. This package manager bootstraps the complete workspace structure and orchestrates the nimsforest-organize and nimsforest-productize tools.
 
-### 1. Add to your project
+## Quick Start
+
+### 1. Install NimsForest PM
 ```bash
-git submodule add https://github.com/nimsforest/nimsforestpackagemanager.git tools/nimsforestpm
+git clone https://github.com/nimsforest/nimsforest-pm
+cd nimsforest-pm
+make install
 ```
 
-### 2. Create your organizational workspace
+### 2. Bootstrap Organization Workspace
 ```bash
-cd nimsforestpm
-make nimsforestpm-hello
-make nimsforestpm-create-organisation ORG_NAME=my-company
+# Create complete workspace structure
+nimsforest-pm bootstrap my-org-workspace
+
+# Or install tools individually  
+nimsforest-pm install organize    # For organization coordination
+nimsforest-pm install productize  # For product development
 ```
 
-### 3. Install components and start organizing
-```bash
-cd ../my-company-workspace/my-company-repository/main
-make nimsforestpm-install COMPONENTS=work,communication,organization
+### 3. What You Get
+```
+my-org-workspace/
+├── org-repository/              # Organization coordination (nimsforest-organize)
+│   ├── docs/purpose/           # Vision, mission, goals, strategy
+│   ├── docs/people/            # Teams, roles, skills, structure
+│   ├── docs/processes/         # Workflows, procedures, methods
+│   ├── docs/resources/         # Budget, tools, assets, constraints
+│   ├── docs/knowledge/         # Decisions made, lessons learned
+│   └── products/               # Git submodule links to products
+└── products-workspace/         # Product development ecosystem
+    ├── shared/                 # Common libraries, components, APIs
+    ├── product-a-workspace/    # nimsforest-productize value streams
+    │   ├── main/              # Main development branch
+    │   └── feature-branches/  # Git worktrees for parallel work
+    └── product-b-workspace/
+        ├── main/
+        └── feature-branches/
 ```
 
-## Why This Organizational Structure?
+## The Full NimsForest Toolset
 
-This organizational structure is inspired by **game engine architecture** - treating your organization as a dynamic scene where different entities interact to create value.
+### Core Philosophy
+Organizations are optimization engines where humans coordinate (organize) to create products that deliver user value (productize). Better coordination enables better products, which teaches better coordination—an endless improvement cycle.
 
-We also drew inspiration from **Pixar's USD (Universal Scene Description)** for hierarchical organization and **git worktree** patterns for flexible development.
+### Tool Responsibilities
 
-## Organizational Structure
+**nimsforest-pm** (this package manager):
+- Bootstraps complete workspace architecture
+- Orchestrates organize and productize tool installation
+- Provides seamless integration with no dependencies beyond Unix tools
 
-### actors/
-All entities that can perform actions in your organizational scene:
+**nimsforest-organize**:
+- Creates event-driven organizational coordination structure
+- MECE (Mutually Exclusive, Collectively Exhaustive) documentation system
+- Purpose → People → Processes → Resources → Knowledge architecture
 
-- **nims/**: Intelligent advisory actors that learn optimal patterns through reinforcement learning. These are the smart shadows that provide transparent, objective guidance to help work flow better.
+**nimsforest-productize**:
+- Generates complete value stream repositories
+- Infrastructure as code (NixOS-style declarative systems)  
+- Built-in metrics, feedback loops, and communication systems
+- Communicate → Awareness → Usage → Feedback → Improve cycle
 
-- **humans/**: People in the organization - employees, stakeholders, customers. The decision makers and creative force.
+## Installation Patterns
 
-- **machines/**: Physical systems that perform work:
-  - **mobile/**: Drones, robots, vehicles - systems that can move around
-  - **fixed/**: Servers, ASML machines, production equipment - stationary systems
-
-### assets/
-Resources and files that actors use:
-
-- **documentation/**: Knowledge and processes
-- **data/**: Information and datasets
-- **media/**: Images, videos, presentations
-- **templates/**: Reusable patterns and structures
-
-### tools/
-Capabilities and utilities that enable work:
-
-- **shared/**: Tools shared across the organization (via tools-repository)
-- **org-specific/**: Tools specific to this organization
-
-### products/
-What the organization builds and delivers:
-
-- Each product has its own repository with the same actor/asset/tool structure
-- Products are linked as git submodules for version control
-- Can be software, hardware, or services
-
-## Workspace Architecture
-
-The workspace follows a **three-repository pattern**:
-
-1. **Organization Repository**: Core organizational structure
-2. **Tools Repository**: Shared utilities and NimsForest components
-3. **Product Repositories**: Individual product development
-
-This separation allows for:
-- **Independent versioning**: Each component can evolve at its own pace
-- **Flexible permissions**: Different access levels for different repositories
-- **Git worktree support**: The `/main/` structure supports branching strategies
-
-## Core Components
-
-The organizational intelligence cycle components:
-
-1. **nimsforestcommunication** - Captures all inbound communication
-2. **nimsforestwork** - Transforms communication into structured work items  
-3. **nimsforestorganization** - Maintains organizational structure and identity
-4. **nimsforestwebstack** - Enables outbound communication and web presence
-5. **nimsforestfolders** - Advanced folder management system
-
-## Commands
-
+### Complete Setup (Recommended)
 ```bash
-make nimsforestpm-hello                           # System compatibility check
-make nimsforestpm-create-organisation ORG_NAME=  # Create organizational workspace
-make nimsforestpm-add-product PRODUCT_NAME=      # Add product repository
-make nimsforestpm-install COMPONENTS=            # Install specific components
-make nimsforestpm-install-component COMPONENT=   # Install individual component
-make nimsforestpm-install-folders                # Install folder management
-make nimsforestpm-addtomainmake                  # Add nimsforestpm to main Makefile
-make nimsforestpm-lint                           # Validate installed components
+# Bootstrap everything at once
+nimsforest-pm bootstrap my-org-workspace
+cd my-org-workspace
+
+# Initialize organization coordination
+cd org-repository/main
+nimsforest-organize init
+
+# Create your first product
+cd ../../products-workspace
+nimsforest-productize create my-first-product
+cd my-first-product-workspace/main
+nimsforest-productize init
 ```
 
-## Component Installation
-
+### Individual Tool Installation
 ```bash
-# Install specific components
-make nimsforestpm-install COMPONENTS=work,communication
-make nimsforestpm-install COMPONENTS=organization,webstack,folders
+# Just organization coordination
+nimsforest-pm install organize
+nimsforest-organize init
 
-# Install individual component
-make nimsforestpm-install-component COMPONENT=nimsforestfolders
-
-# Install all components
-make nimsforestpm-install COMPONENTS=all
+# Just product development  
+nimsforest-pm install productize
+nimsforest-productize create my-product
 ```
 
-## Product Management
-
+### Legacy Integration
 ```bash
-# Create software product
-make nimsforestpm-add-product PRODUCT_NAME=my-app PRODUCT_TYPE=software
-
-# Create hardware product
-make nimsforestpm-add-product PRODUCT_NAME=my-device PRODUCT_TYPE=hardware
-
-# Create service product
-make nimsforestpm-add-product PRODUCT_NAME=my-service PRODUCT_TYPE=service
+# Add to existing project as git submodule
+git submodule add https://github.com/nimsforest/nimsforest-pm tools/nimsforest-pm
+cd tools/nimsforest-pm
+make legacy-install ORG_NAME=my-company
 ```
 
-## Design Philosophy
+## Event-Driven Integration
 
-This structure embodies several key principles:
+### Organization → Product Events
+- Organizational changes trigger events that flow to product development
+- Strategy updates automatically sync to product roadmaps
+- Resource changes update product capacity planning
+- Team structure changes update product ownership
 
-1. **Game Engine Thinking**: Organizations are dynamic scenes with interacting entities
-2. **Learning Systems**: Nims provide objective, transparent optimization
-3. **Hierarchical Tools**: Each level (workspace, org, product) has its own tools
-4. **Clean Separation**: Actors do things, assets are resources, tools enable work
-5. **Git Worktree Ready**: Structure supports advanced branching workflows
+### Product → Organization Events  
+- Product feedback generates events that improve organizational coordination
+- User metrics inform organizational decision-making
+- Product learnings update organizational knowledge base
+- Value creation data drives coordination optimization
 
-## Integration
+### Continuous Optimization Loop
+1. Organization coordinates better → Products create more value
+2. Products create more value → Organization learns coordination patterns  
+3. Organization learns coordination patterns → Organization coordinates better
+4. Endless cycle of improvement
 
-Each component follows the same pattern:
-- Self-contained with README.md and MAKEFILE
-- Git submodule ready
-- Integrates via `make {component}-init`
-- Works together to enable the complete organizational funnel
+## Package Manager Commands
 
-Perfect for organizations wanting to systematically capture, process, and act on all communication while maintaining complete organizational intelligence.
+### Core Commands
+```bash
+nimsforest-pm bootstrap <workspace-name>    # Create complete workspace
+nimsforest-pm install organize             # Install organization tools
+nimsforest-pm install productize           # Install product development tools
+nimsforest-pm status                        # Check installation status
+nimsforest-pm update                        # Update all installed tools
+```
+
+### Organization Commands (via nimsforest-organize)
+```bash
+nimsforest-organize init                    # Initialize org coordination structure
+nimsforest-organize validate               # Validate MECE structure
+nimsforest-organize events                 # Show active event streams
+nimsforest-organize metrics                # Organization coordination metrics
+```
+
+### Product Commands (via nimsforest-productize)
+```bash
+nimsforest-productize create <product-name>  # Create new product workspace
+nimsforest-productize init                   # Initialize value stream structure  
+nimsforest-productize deploy                 # Deploy infrastructure as code
+nimsforest-productize metrics                # Product value metrics
+nimsforest-productize feedback               # User feedback analysis
+```
+
+### Legacy Support (Makefile-based)
+```bash
+make nimsforestpm-hello                     # System compatibility check
+make nimsforestpm-create-organisation       # Legacy workspace creation
+make nimsforestpm-install COMPONENTS=       # Legacy component installation
+```
+
+## Why NimsForest?
+
+### For Organizations
+- **Explicit Coordination**: Make invisible organizational patterns visible and improvable
+- **Value-Driven**: Every decision anchored to user value creation
+- **Event-Driven**: Changes trigger measurable responses across the system
+- **Continuous Learning**: Product feedback improves organizational coordination
+
+### For Developers
+- **Infrastructure as Code**: Declarative, reproducible systems (NixOS-style)
+- **Git Worktree Ready**: `/main/` structure supports advanced branching workflows
+- **No Dependencies**: Pure Unix tools (make, bash) - works everywhere
+- **Modular**: Install only what you need, when you need it
+
+### For Teams
+- **MECE Structure**: Mutually Exclusive, Collectively Exhaustive organization
+- **Clear Ownership**: Every product has its own complete value stream
+- **Automatic Integration**: Events flow between organization and products
+- **Measurable Impact**: Track value creation from coordination to customer
+
+Perfect for organizations ready to treat coordination like infrastructure as code—explicit, measurable, and continuously optimized.
