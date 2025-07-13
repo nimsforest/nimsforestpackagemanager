@@ -4,6 +4,8 @@
 
 NimsForest PM creates workspaces where organizations can explicitly optimize their coordination (organize) and value creation (productize) in an endless improvement cycle. This package manager bootstraps the complete workspace structure and orchestrates the nimsforest-organize and nimsforest-productize tools.
 
+📖 **[Read the full philosophy and architecture guide →](docs/hello.md)**
+
 ## Quick Start
 
 ### 1. Install NimsForest PM
