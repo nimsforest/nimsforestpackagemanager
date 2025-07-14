@@ -10,25 +10,26 @@ NimsForest PM creates workspaces where organizations can explicitly optimize the
 
 ### 1. Install NimsForest PM
 ```bash
-git clone https://github.com/nimsforest/nimsforest-pm
-cd nimsforest-pm
-make install
+# Download and install the bootstrap binary
+curl -L https://install.nimsforest.com | sh
+# Binary is now available as 'nimsforestpm'
 ```
 
 ### 2. Bootstrap Organization Workspace
 ```bash
 # Create complete workspace structure
-nimsforest-pm bootstrap my-org-workspace
+nimsforestpm bootstrap my-org-workspace
 
 # Or install tools individually  
-nimsforest-pm install organize    # For organization coordination
-nimsforest-pm install productize  # For product development
+nimsforestpm install organize    # For organization coordination
+nimsforestpm install productize  # For product development
+nimsforestpm install os          # For real-time runtime coordination
 ```
 
 ### 3. What You Get
 ```
 my-org-workspace/
-├── org-repository/              # Organization coordination (nimsforest-organize)
+├── mycompany-organization-repository/  # Organization coordination (nimsforestorganize)
 │   ├── docs/purpose/           # Vision, mission, goals, strategy
 │   ├── docs/people/            # Teams, roles, skills, structure
 │   ├── docs/processes/         # Workflows, procedures, methods
@@ -77,7 +78,7 @@ nimsforest-pm bootstrap my-org-workspace
 cd my-org-workspace
 
 # Initialize organization coordination
-cd org-repository/main
+cd mycompany-organization-repository/main
 nimsforest-organize init
 
 # Create your first product
