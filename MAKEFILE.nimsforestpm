@@ -63,9 +63,8 @@ nimsforestpm-create-organisation:
 	@echo "=== Creating $(ORG_NAME) Organization Workspace ==="
 	@echo "Creating organizational workspace structure..."
 	@mkdir -p $(ORG_NAME)-workspace
-	@mkdir -p $(ORG_NAME)-workspace/$(ORG_NAME)-repository/main
-	@mkdir -p $(ORG_NAME)-workspace/product-repositories
-	@mkdir -p $(ORG_NAME)-workspace/tools-repository
+	@mkdir -p $(ORG_NAME)-workspace/$(ORG_NAME)-organization-workspace/main
+	@mkdir -p $(ORG_NAME)-workspace/products-workspace
 	@echo "Creating organizational folder structure using nimsforestfolders..."
 	@if command -v make >/dev/null 2>&1 && make -n nimsforestfolders-create-folders >/dev/null 2>&1; then \
 		MAKEFILE_DIR=$$(dirname "$$(realpath "$(firstword $(MAKEFILE_LIST))")"); \
@@ -75,38 +74,34 @@ nimsforestpm-create-organisation:
 		fi; \
 		make nimsforestfolders-create-folders \
 			JSON_FILE="$$TEMPLATE_PATH" \
-			BASE_PATH="$(ORG_NAME)-workspace/$(ORG_NAME)-repository/main"; \
+			BASE_PATH="$(ORG_NAME)-workspace/$(ORG_NAME)-organization-workspace/main"; \
 	else \
 		echo "⚠️  nimsforestfolders not available - skipping folder structure creation"; \
 		echo "   Install nimsforestfolders or run 'make nimsforestpm-install COMPONENTS=folders' to create proper structure"; \
 	fi
 	@echo "Initializing git repositories..."
-	@cd $(ORG_NAME)-workspace/$(ORG_NAME)-repository && git init
-	@cd $(ORG_NAME)-workspace/tools-repository && git init
+	@cd $(ORG_NAME)-workspace/$(ORG_NAME)-organization-workspace && git init
 	@echo "Creating organization README from template..."
 	@MAKEFILE_DIR=$$(dirname "$$(realpath "$(firstword $(MAKEFILE_LIST))")"); \
 	TEMPLATE_PATH="$$MAKEFILE_DIR/../docs/templates/organization-README.md"; \
 	if [ ! -f "$$TEMPLATE_PATH" ]; then \
 		TEMPLATE_PATH="../docs/templates/organization-README.md"; \
 	fi; \
-	sed 's/{{ORG_NAME}}/$(ORG_NAME)/g' "$$TEMPLATE_PATH" > $(ORG_NAME)-workspace/$(ORG_NAME)-repository/main/README.md
-	@echo "Adding nimsforestpm as submodule to tools-repository..."
-	@cd $(ORG_NAME)-workspace/tools-repository && git submodule add https://github.com/nimsforest/nimsforestpackagemanager.git nimsforest-components/nimsforestpm
-	@echo "Linking tools-repository to organization..."
-	@cd $(ORG_NAME)-workspace/$(ORG_NAME)-repository && git submodule add ../tools-repository main/tools/shared
+	sed 's/{{ORG_NAME}}/$(ORG_NAME)/g' "$$TEMPLATE_PATH" > $(ORG_NAME)-workspace/$(ORG_NAME)-organization-workspace/main/README.md
+	@echo "Tools are now products - nimsforestpm will be available as global binary"
+	@echo "No submodule installation needed for nimsforestpm"
 	@echo "Creating organization Makefile..."
-	@echo "# $(ORG_NAME) Organization Makefile" > $(ORG_NAME)-workspace/$(ORG_NAME)-repository/main/Makefile
-	@echo "# Include NimsForest Package Manager" >> $(ORG_NAME)-workspace/$(ORG_NAME)-repository/main/Makefile
-	@echo "" >> $(ORG_NAME)-workspace/$(ORG_NAME)-repository/main/Makefile
-	@echo "include tools/shared/nimsforest-components/nimsforestpm/MAKEFILE.nimsforestpm" >> $(ORG_NAME)-workspace/$(ORG_NAME)-repository/main/Makefile
-	@cd $(ORG_NAME)-workspace/$(ORG_NAME)-repository && git add .
-	@cd $(ORG_NAME)-workspace/$(ORG_NAME)-repository && git commit -m "Initial $(ORG_NAME) organization setup"
-	@cd $(ORG_NAME)-workspace/tools-repository && git add .
-	@cd $(ORG_NAME)-workspace/tools-repository && git commit -m "Initial tools repository setup"
+	@echo "# $(ORG_NAME) Organization Makefile" > $(ORG_NAME)-workspace/$(ORG_NAME)-organization-workspace/main/Makefile
+	@echo "# Include NimsForest Package Manager" >> $(ORG_NAME)-workspace/$(ORG_NAME)-organization-workspace/main/Makefile
+	@echo "" >> $(ORG_NAME)-workspace/$(ORG_NAME)-organization-workspace/main/Makefile
+	@echo "# nimsforestpm available as global binary" >> $(ORG_NAME)-workspace/$(ORG_NAME)-organization-workspace/main/Makefile
+	@cd $(ORG_NAME)-workspace/$(ORG_NAME)-organization-workspace && git add .
+	@cd $(ORG_NAME)-workspace/$(ORG_NAME)-organization-workspace && git commit -m "Initial $(ORG_NAME) organization setup"
+	@echo "No separate tools repository needed - tools are products"
 	@echo "✓ $(ORG_NAME) organization workspace created successfully!"
 	@echo ""
 	@echo "Next steps:"
-	@echo "  cd $(ORG_NAME)-workspace/$(ORG_NAME)-repository/main"
+	@echo "  cd $(ORG_NAME)-workspace/$(ORG_NAME)-organization-workspace/main"
 	@echo "  make nimsforestpm-install COMPONENTS=work,communication,organization,webstack"
 
 nimsforestpm-add-product:
@@ -120,9 +115,9 @@ nimsforestpm-add-product:
 	fi
 	@echo "=== Adding $(PRODUCT_NAME) Product ==="
 	@echo "Creating product repository..."
-	@WORKSPACE_DIR=$$(pwd | sed 's|/[^/]*-repository.*||'); \
-	mkdir -p $$WORKSPACE_DIR/product-repositories/$(PRODUCT_NAME); \
-	cd $$WORKSPACE_DIR/product-repositories/$(PRODUCT_NAME) && git init; \
+	@WORKSPACE_DIR=$$(pwd | sed 's|/[^/]*-organization-workspace.*||'); \
+	mkdir -p $$WORKSPACE_DIR/products-workspace/$(PRODUCT_NAME)-workspace; \
+	cd $$WORKSPACE_DIR/products-workspace/$(PRODUCT_NAME)-workspace && git init; \
 	MAKEFILE_DIR=$$(dirname "$$(realpath "$(firstword $(MAKEFILE_LIST))")"); \
 	TEMPLATE_PATH="$$MAKEFILE_DIR/../docs/templates/nimsforest-product-structure.json"; \
 	if [ ! -f "$$TEMPLATE_PATH" ]; then \
@@ -130,7 +125,7 @@ nimsforestpm-add-product:
 	fi; \
 	make nimsforestfolders-create-folders \
 		JSON_FILE="$$TEMPLATE_PATH" \
-		BASE_PATH="$$WORKSPACE_DIR/product-repositories/$(PRODUCT_NAME)"; \
+		BASE_PATH="$$WORKSPACE_DIR/products-workspace/$(PRODUCT_NAME)-workspace"; \
 	echo "# $(PRODUCT_NAME) Product" > README.md; \
 	echo "" >> README.md; \
 	echo "Product Type: $(PRODUCT_TYPE)" >> README.md; \
@@ -143,12 +138,12 @@ nimsforestpm-add-product:
 	git add .; \
 	git commit -m "Initial $(PRODUCT_NAME) product setup"
 	@echo "Adding product as submodule to organization..."
-	@WORKSPACE_DIR=$$(pwd | sed 's|/[^/]*-repository.*||'); \
-	ORG_REPO=$$(basename $$WORKSPACE_DIR | sed 's/-workspace$$/-repository/'); \
-	cd $$WORKSPACE_DIR/$$ORG_REPO && git submodule add ../product-repositories/$(PRODUCT_NAME) main/products/$(PRODUCT_NAME)
+	@WORKSPACE_DIR=$$(pwd | sed 's|/[^/]*-organization-workspace.*||'); \
+	ORG_REPO=$$(basename $$WORKSPACE_DIR | sed 's/-workspace$$/-organization-workspace/'); \
+	cd $$WORKSPACE_DIR/$$ORG_REPO && git submodule add ../products-workspace/$(PRODUCT_NAME)-workspace main/products/$(PRODUCT_NAME)
 	@echo "✓ $(PRODUCT_NAME) product added successfully!"
 	@echo ""
-	@echo "Product location: ../product-repositories/$(PRODUCT_NAME)"
+	@echo "Product location: ../products-workspace/$(PRODUCT_NAME)-workspace"
 	@echo "Linked to organization at: main/products/$(PRODUCT_NAME)"
 
 nimsforestpm-addtomainmake:
@@ -175,18 +170,13 @@ nimsforestpm-install-component:
 		exit 1; \
 	fi
 	@echo "=== Installing $(COMPONENT) ==="
-	@echo "Adding $(COMPONENT) as submodule..."
-	@if [ -d "tools/shared/nimsforest-components" ]; then \
-		cd tools/shared/nimsforest-components && git submodule add https://github.com/nimsforest/$(COMPONENT).git $(COMPONENT); \
-		echo "include tools/shared/nimsforest-components/$(COMPONENT)/MAKEFILE.$(COMPONENT)" >> Makefile; \
-	elif [ -d "tools/nimsforest-components" ]; then \
-		cd tools/nimsforest-components && git submodule add https://github.com/nimsforest/$(COMPONENT).git $(COMPONENT); \
-		echo "include tools/nimsforest-components/$(COMPONENT)/MAKEFILE.$(COMPONENT)" >> Makefile; \
-	elif [ -d "tools" ]; then \
-		cd tools && git submodule add https://github.com/nimsforest/$(COMPONENT).git $(COMPONENT); \
-		echo "include tools/$(COMPONENT)/MAKEFILE.$(COMPONENT)" >> Makefile; \
+	@echo "Adding $(COMPONENT) as product workspace..."
+	@WORKSPACE_DIR=$$(pwd | sed 's|/[^/]*-organization-workspace.*||'); \
+	if [ -d "$$WORKSPACE_DIR/products-workspace" ]; then \
+		cd $$WORKSPACE_DIR/products-workspace && git submodule add https://github.com/nimsforest/$(COMPONENT).git $(COMPONENT)-workspace; \
+		echo "include ../products-workspace/$(COMPONENT)-workspace/main/MAKEFILE.$(COMPONENT)" >> $$WORKSPACE_DIR/$$(basename $$WORKSPACE_DIR)-organization-workspace/main/Makefile; \
 	else \
-		echo "Error: No tools directory found. Run from organization repository."; \
+		echo "Error: No products-workspace found. Run from organization workspace."; \
 		exit 1; \
 	fi
 	@echo "✓ $(COMPONENT) installed successfully!"
@@ -233,7 +223,7 @@ nimsforestpm-lint:
 	@echo "=== NimsforestPM Organization Validation ==="
 	@echo "Checking organizational structure..."
 	@echo ""
-	@WORKSPACE_DIR=$$(pwd | sed 's|/[^/]*-repository.*||'); \
+	@WORKSPACE_DIR=$$(pwd | sed 's|/[^/]*-organization-workspace.*||'); \
 	if [ -d "$$WORKSPACE_DIR" ]; then \
 		echo "✓ Workspace structure detected"; \
 		echo "Validating folder structure against template..."; \
@@ -286,14 +276,14 @@ nimsforestpm-lint:
 		fi; \
 		echo ""; \
 		echo "Checking products..."; \
-		if [ -d "$$WORKSPACE_DIR/product-repositories" ]; then \
-			product_count=$$(ls -1 $$WORKSPACE_DIR/product-repositories | wc -l); \
+		if [ -d "$$WORKSPACE_DIR/products-workspace" ]; then \
+			product_count=$$(ls -1 $$WORKSPACE_DIR/products-workspace | wc -l); \
 			echo "Products found: $$product_count"; \
 			if [ $$product_count -gt 0 ]; then \
-				ls -1 $$WORKSPACE_DIR/product-repositories | sed 's/^/  - /'; \
+				ls -1 $$WORKSPACE_DIR/products-workspace | sed 's/^/  - /'; \
 			fi; \
 		else \
-			echo "No product repositories found"; \
+			echo "No product workspaces found"; \
 		fi; \
 	else \
 		echo "✗ Not in a NimsForest workspace structure"; \

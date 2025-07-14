@@ -1,0 +1,26 @@
+# Custom headers for installation scripts
+<Files "linux">
+    Header set Content-Type "text/plain"
+    Header set Cache-Control "public, max-age=300"
+</Files>
+
+<Files "macos">
+    Header set Content-Type "text/plain"
+    Header set Cache-Control "public, max-age=300"
+</Files>
+
+<Files "windows">
+    Header set Content-Type "text/plain"
+    Header set Cache-Control "public, max-age=300"
+</Files>
+
+<Files "install.sh">
+    Header set Content-Type "text/plain"
+    Header set Cache-Control "public, max-age=300"
+</Files>
+
+# Security headers
+Header always set X-Content-Type-Options "nosniff"
+Header always set X-Frame-Options "DENY"
+Header always set X-XSS-Protection "1; mode=block"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"

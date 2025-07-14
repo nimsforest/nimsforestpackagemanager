@@ -29,7 +29,7 @@ nimsforestpm install os          # For real-time runtime coordination
 ### 3. What You Get
 ```
 my-org-workspace/
-├── mycompany-organization-repository/  # Organization coordination (nimsforestorganize)
+├── my-org-organization-workspace/  # Organization coordination (nimsforestorganize)
 │   ├── docs/purpose/           # Vision, mission, goals, strategy
 │   ├── docs/people/            # Teams, roles, skills, structure
 │   ├── docs/processes/         # Workflows, procedures, methods
@@ -78,7 +78,7 @@ nimsforest-pm bootstrap my-org-workspace
 cd my-org-workspace
 
 # Initialize organization coordination
-cd mycompany-organization-repository/main
+cd my-org-organization-workspace/main
 nimsforest-organize init
 
 # Create your first product

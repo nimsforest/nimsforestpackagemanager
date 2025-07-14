@@ -1,0 +1,83 @@
+# GoReleaser configuration for nimsforestpm
+# Builds cross-platform binaries and creates GitHub releases
+
+project_name: nimsforestpm
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: nimsforestpm
+    main: ./cmd
+    binary: nimsforestpm
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64  # Windows ARM64 not commonly needed yet
+
+archives:
+  - id: nimsforestpm
+    builds:
+      - nimsforestpm
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - README.md
+      - LICENSE*
+
+# Create individual binaries for our install scripts
+# This matches the naming convention expected by our install scripts
+release:
+  extra_files:
+    - glob: ./dist/nimsforestpm_linux_amd64/nimsforestpm
+      name_template: nimsforestpm_linux_amd64
+    - glob: ./dist/nimsforestpm_linux_arm64/nimsforestpm  
+      name_template: nimsforestpm_linux_arm64
+    - glob: ./dist/nimsforestpm_darwin_amd64/nimsforestpm
+      name_template: nimsforestpm_darwin_amd64
+    - glob: ./dist/nimsforestpm_darwin_arm64/nimsforestpm
+      name_template: nimsforestpm_darwin_arm64
+    - glob: ./dist/nimsforestpm_windows_amd64/nimsforestpm.exe
+      name_template: nimsforestpm_windows_amd64.exe
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+  groups:
+    - title: Features
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 0
+    - title: 'Bug fixes'
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 1
+    - title: Others
+      order: 999
