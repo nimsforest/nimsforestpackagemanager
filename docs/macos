@@ -1,3 +1,5 @@
+---
+---
 #!/bin/bash
 # NimsForest Package Manager Installation Script for macOS
 # Usage: curl -fsSL get.nimsforest.com/macos | sh

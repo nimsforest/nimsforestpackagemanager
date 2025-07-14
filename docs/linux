@@ -1,3 +1,5 @@
+---
+---
 #!/bin/bash
 # NimsForest Package Manager Installation Script for Linux
 # Usage: curl -fsSL get.nimsforest.com/linux | sh
