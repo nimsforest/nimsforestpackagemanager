@@ -171,13 +171,36 @@ nimsforestpm-install-component:
 	fi
 	@echo "=== Installing $(COMPONENT) ==="
 	@echo "Adding $(COMPONENT) as product workspace..."
-	@WORKSPACE_DIR=$$(pwd | sed 's|/[^/]*-organization-workspace.*||'); \
-	if [ -d "$$WORKSPACE_DIR/products-workspace" ]; then \
-		cd $$WORKSPACE_DIR/products-workspace && git submodule add https://github.com/nimsforest/$(COMPONENT).git $(COMPONENT)-workspace; \
-		echo "include ../products-workspace/$(COMPONENT)-workspace/main/MAKEFILE.$(COMPONENT)" >> $$WORKSPACE_DIR/$$(basename $$WORKSPACE_DIR)-organization-workspace/main/Makefile; \
-	else \
-		echo "Error: No products-workspace found. Run from organization workspace."; \
+	@WORKSPACE_DIR=$$(pwd); \
+	while [ "$$WORKSPACE_DIR" != "/" ]; do \
+		if [ -d "$$WORKSPACE_DIR/products-workspace" ]; then \
+			echo "📁 Found workspace at $$WORKSPACE_DIR"; \
+			break; \
+		fi; \
+		WORKSPACE_DIR=$$(dirname "$$WORKSPACE_DIR"); \
+	done; \
+	if [ "$$WORKSPACE_DIR" = "/" ]; then \
+		echo "❌ No NimsForest workspace found"; \
+		echo "💡 Are you in a NimsForest workspace? Look for a directory with 'products-workspace/'"; \
+		echo "🔍 Try running: find . -name 'products-workspace' -type d 2>/dev/null"; \
 		exit 1; \
+	fi; \
+	if [ -d "$$WORKSPACE_DIR/products-workspace/$(COMPONENT)-workspace" ]; then \
+		echo "✅ $(COMPONENT) already installed"; \
+	else \
+		echo "📦 Installing $(COMPONENT)..."; \
+		cd $$WORKSPACE_DIR/products-workspace && git submodule add https://github.com/nimsforest/$(COMPONENT).git $(COMPONENT)-workspace; \
+	fi; \
+	ORG_WORKSPACE=$$(find $$WORKSPACE_DIR -name '*-organization-workspace' -type d | head -1); \
+	if [ -n "$$ORG_WORKSPACE" ]; then \
+		if ! grep -q "MAKEFILE.$(COMPONENT)" $$ORG_WORKSPACE/main/Makefile; then \
+			echo "🔗 Integrating $(COMPONENT) into organization Makefile"; \
+			echo "include ../products-workspace/$(COMPONENT)-workspace/main/MAKEFILE.$(COMPONENT)" >> $$ORG_WORKSPACE/main/Makefile; \
+		else \
+			echo "✅ $(COMPONENT) already integrated in organization Makefile"; \
+		fi; \
+	else \
+		echo "⚠️  No organization workspace found - $(COMPONENT) available but not integrated"; \
 	fi
 	@echo "✓ $(COMPONENT) installed successfully!"
 	@echo "Initialize with: make $(COMPONENT)-init"
