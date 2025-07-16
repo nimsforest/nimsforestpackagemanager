@@ -183,3 +183,33 @@ make nimsforestpm-install COMPONENTS=       # Legacy component installation
 - **Measurable Impact**: Track value creation from coordination to customer
 
 Perfect for organizations ready to treat coordination like infrastructure as code—explicit, measurable, and continuously optimized.
+
+## Tool Development
+
+To develop tools compatible with nimsforest package manager, see the [Developer Instructions](pkg/DEVELOPER_INSTRUCTIONS.md) and the [Tool Package Documentation](pkg/tool/README.md).
+
+### Quick Start for Tool Developers
+
+```bash
+# Add dependency to your tool project
+go get github.com/nimsforest/nimsforestpackagemanager/pkg/tool@latest
+
+# Import in your code
+import "github.com/nimsforest/nimsforestpackagemanager/pkg/tool"
+```
+
+See the [Migration Guide](pkg/tool/README.md#migration-guide) for step-by-step instructions on migrating existing tools.
+
+### Binary Installation
+
+Once your tool is built, users can install it using:
+
+```bash
+# Build your tool
+go build -o mytool ./cmd/mytool
+
+# Install via package manager
+nimsforestpm install --name mytool --path ./mytool
+```
+
+Tools are automatically tracked in workspace files and appear in `nimsforestpm status`.
