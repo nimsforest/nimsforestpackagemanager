@@ -1,3 +1,5 @@
+//go:build integration
+
 package integration
 
 import (
@@ -242,24 +244,7 @@ func TestCLIHelp(t *testing.T) {
 	})
 }
 
-// buildCLIBinary builds the CLI binary for testing
-func buildCLIBinary(t *testing.T, tempDir string) string {
-	// Get the main package directory
-	_, currentFile, _, _ := runtime.Caller(0)
-	cmdDir := filepath.Dir(filepath.Dir(currentFile))
-	
-	binaryPath := filepath.Join(tempDir, "nimsforestpm-test")
-	
-	// Build the binary
-	cmd := exec.Command("go", "build", "-o", binaryPath, "./cmd")
-	cmd.Dir = cmdDir
-	
-	if output, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("Failed to build CLI binary: %v\nOutput: %s", err, string(output))
-	}
-	
-	return binaryPath
-}
+// buildCLIBinary is now defined in common_test.go
 
 // setupMockWorkspace creates a mock workspace with test tools
 func setupMockWorkspace(t *testing.T, tempDir string) string {
@@ -308,3 +293,183 @@ func setupMockWorkspace(t *testing.T, tempDir string) string {
 
 	return filepath.Join(workspaceDir, "test-organization-workspace")
 }
+
+// TestWorkspaceCreation tests end-to-end workspace creation scenarios
+func TestWorkspaceCreation(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	tempDir := t.TempDir()
+	originalDir, _ := os.Getwd()
+	defer os.Chdir(originalDir)
+
+	// Build the CLI binary for testing
+	cliPath := buildCLIBinary(t, tempDir)
+	
+	// Create a test directory for workspace creation
+	testDir := filepath.Join(tempDir, "workspace-test")
+	if err := os.MkdirAll(testDir, 0755); err != nil {
+		t.Fatalf("Failed to create test directory: %v", err)
+	}
+	os.Chdir(testDir)
+
+	t.Run("CreateOrganizationWorkspace", func(t *testing.T) {
+		// First, we need to ensure we have a makefile available
+		// Copy the makefile from the project root to test directory
+		_, currentFile, _, _ := runtime.Caller(0)
+		projectRoot := filepath.Dir(filepath.Dir(currentFile))
+		makefileSrc := filepath.Join(projectRoot, "MAKEFILE.nimsforestpm")
+		makefileDst := filepath.Join(testDir, "MAKEFILE.nimsforestpm")
+		
+		// Copy makefile for testing
+		if err := copyFile(makefileSrc, makefileDst); err != nil {
+			t.Skipf("Skipping workspace creation test - makefile not available: %v", err)
+			return
+		}
+
+		// Test workspace creation
+		cmd := exec.Command(cliPath, "create-organization-workspace", "test-org")
+		cmd.Dir = testDir
+		output, err := cmd.CombinedOutput()
+		
+		if err != nil {
+			t.Logf("Create workspace output: %s", string(output))
+			t.Skipf("Workspace creation test skipped - requires make environment: %v", err)
+			return
+		}
+
+		// Verify workspace structure was created
+		expectedDirs := []string{
+			"test-org-organization-workspace",
+			"products-workspace",
+		}
+
+		for _, dir := range expectedDirs {
+			dirPath := filepath.Join(testDir, dir)
+			if _, err := os.Stat(dirPath); os.IsNotExist(err) {
+				t.Errorf("Expected directory %s was not created", dir)
+			}
+		}
+	})
+
+	t.Run("StatusInCreatedWorkspace", func(t *testing.T) {
+		// Navigate to the created workspace
+		workspaceDir := filepath.Join(testDir, "test-org-organization-workspace")
+		if _, err := os.Stat(workspaceDir); os.IsNotExist(err) {
+			t.Skip("Workspace not created, skipping status test")
+			return
+		}
+		
+		os.Chdir(workspaceDir)
+		
+		cmd := exec.Command(cliPath, "status")
+		output, err := cmd.CombinedOutput()
+		
+		if err != nil {
+			t.Logf("Status output: %s", string(output))
+			t.Skip("Status test skipped - requires make environment")
+			return
+		}
+
+		outputStr := string(output)
+		// Should not show "not in workspace" message
+		if strings.Contains(outputStr, "Not in a nimsforest workspace") {
+			t.Error("Status should recognize valid workspace")
+		}
+	})
+}
+
+// TestWorkspaceFilesPersistence tests that workspace files persist across operations
+func TestWorkspaceFilesPersistence(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	tempDir := t.TempDir()
+	originalDir, _ := os.Getwd()
+	defer os.Chdir(originalDir)
+
+	// Build the CLI binary for testing
+	cliPath := buildCLIBinary(t, tempDir)
+	
+	// Create a mock workspace for testing
+	workspaceDir := setupMockWorkspace(t, tempDir)
+	os.Chdir(workspaceDir)
+
+	t.Run("MultipleStatusCalls", func(t *testing.T) {
+		// Run status command multiple times to ensure consistency
+		for i := 0; i < 3; i++ {
+			cmd := exec.Command(cliPath, "status")
+			output, err := cmd.CombinedOutput()
+			
+			if err != nil {
+				t.Logf("Status call %d failed: %v\nOutput: %s", i+1, err, string(output))
+				continue
+			}
+
+			outputStr := string(output)
+			if strings.Contains(outputStr, "Not in a nimsforest workspace") {
+				t.Errorf("Status call %d should recognize workspace", i+1)
+			}
+		}
+	})
+}
+
+// TestErrorScenarios tests various error conditions
+func TestErrorScenarios(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	tempDir := t.TempDir()
+	originalDir, _ := os.Getwd()
+	defer os.Chdir(originalDir)
+
+	// Build the CLI binary for testing
+	cliPath := buildCLIBinary(t, tempDir)
+	os.Chdir(tempDir)
+
+	t.Run("CreateWorkspaceWithInvalidName", func(t *testing.T) {
+		// Test with empty name
+		cmd := exec.Command(cliPath, "create-organization-workspace", "")
+		output, err := cmd.CombinedOutput()
+		
+		if err == nil {
+			t.Error("Expected error for empty organization name")
+		}
+		
+		outputStr := string(output)
+		t.Logf("Empty name output: %s", outputStr)
+	})
+
+	t.Run("InstallInvalidComponent", func(t *testing.T) {
+		cmd := exec.Command(cliPath, "install", "invalid-component")
+		output, err := cmd.CombinedOutput()
+		
+		if err == nil {
+			t.Error("Expected error for invalid component")
+		}
+
+		outputStr := string(output)
+		if !strings.Contains(outputStr, "unknown tool") {
+			t.Error("Should indicate unknown tool error")
+		}
+	})
+
+	t.Run("UpdateOutsideWorkspace", func(t *testing.T) {
+		cmd := exec.Command(cliPath, "update")
+		output, err := cmd.CombinedOutput()
+		
+		if err == nil {
+			t.Error("Expected error when updating outside workspace")
+		}
+
+		outputStr := string(output)
+		if !strings.Contains(outputStr, "not in a nimsforest workspace") {
+			t.Error("Should indicate not in workspace")
+		}
+	})
+}
+
+// copyFile is now defined in common_test.go

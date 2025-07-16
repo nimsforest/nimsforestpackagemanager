@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -8,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/nimsforest/nimsforestpackagemanager/internal/workspace"
+	"github.com/nimsforest/nimsforestpackagemanager/internal/runtimetool"
 )
 
 var rootCmd = &cobra.Command{
@@ -47,28 +50,6 @@ func detectWorkspace() (string, error) {
 	return "", fmt.Errorf("not in a nimsforest workspace")
 }
 
-// hasWorkspaceStructure checks if directory contains {orgname}-organization-workspace and products-workspace
-func hasWorkspaceStructure(dir string) bool {
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return false
-	}
-
-	hasOrgWorkspace := false
-	hasProductsWorkspace := false
-
-	for _, entry := range entries {
-		if entry.IsDir() {
-			if strings.HasSuffix(entry.Name(), "-organization-workspace") {
-				hasOrgWorkspace = true
-			}
-			if entry.Name() == "products-workspace" {
-				hasProductsWorkspace = true
-			}
-		}
-	}
-	return hasOrgWorkspace && hasProductsWorkspace
-}
 
 // Tool represents an installed nimsforest tool
 type Tool struct {
@@ -79,69 +60,8 @@ type Tool struct {
 	Description string   // Tool description
 }
 
-// discoverInstalledTools scans products-workspace for installed tools
-func discoverInstalledTools(workspaceRoot string) ([]Tool, error) {
-	var tools []Tool
-	
-	productsDir := filepath.Join(workspaceRoot, "products-workspace")
-	entries, err := os.ReadDir(productsDir)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read products-workspace: %w", err)
-	}
-
-	for _, entry := range entries {
-		if entry.IsDir() && strings.HasSuffix(entry.Name(), "-workspace") {
-			toolName := strings.TrimSuffix(entry.Name(), "-workspace")
-			
-			// Skip if not a nimsforest tool
-			if !strings.HasPrefix(toolName, "nimsforest") {
-				continue
-			}
-
-			makefilePath := filepath.Join(productsDir, entry.Name(), "main", "MAKEFILE."+toolName)
-			if _, err := os.Stat(makefilePath); err == nil {
-				tool := Tool{
-					Name:        strings.TrimPrefix(toolName, "nimsforest"),
-					FullName:    toolName,
-					Path:        filepath.Join(productsDir, entry.Name(), "main"),
-					Commands:    extractCommands(makefilePath, toolName),
-					Description: getToolDescription(toolName),
-				}
-				tools = append(tools, tool)
-			}
-		}
-	}
-	return tools, nil
-}
-
-// extractCommands parses a MAKEFILE to extract available commands
-func extractCommands(makefilePath, toolName string) []string {
-	content, err := os.ReadFile(makefilePath)
-	if err != nil {
-		return []string{"hello", "init", "lint"} // fallback
-	}
-
-	var commands []string
-	lines := strings.Split(string(content), "\n")
-	
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		// Look for lines like "toolname-command:"
-		if strings.HasPrefix(line, toolName+"-") && strings.HasSuffix(line, ":") {
-			// Extract command name
-			full := strings.TrimSuffix(line, ":")
-			if cmd := strings.TrimPrefix(full, toolName+"-"); cmd != full {
-				commands = append(commands, cmd)
-			}
-		}
-	}
-	
-	if len(commands) == 0 {
-		return []string{"hello", "init", "lint"} // fallback
-	}
-	
-	return commands
-}
+// Note: Tool discovery and validation is now handled by the Makefile
+// The status command delegates to 'make nimsforestpm-lint' for consistent behavior
 
 // getToolDescription returns description for a tool
 func getToolDescription(toolName string) string {
@@ -159,35 +79,67 @@ func getToolDescription(toolName string) string {
 	return toolName
 }
 
-// addDynamicCommands discovers installed tools and adds them as subcommands
+// addDynamicCommands discovers and adds dynamic subcommands for installed tools
 func addDynamicCommands() error {
-	workspaceRoot, err := detectWorkspace()
+	// Try to find workspace file
+	currentDir, err := os.Getwd()
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot get current directory: %w", err)
 	}
-
-	tools, err := discoverInstalledTools(workspaceRoot)
+	
+	// Load workspace if available
+	ws, err := workspace.LoadWorkspaceFromDir(currentDir)
 	if err != nil {
-		return err
+		// Not in a workspace, skip dynamic commands
+		return nil
 	}
-
+	
+	// Create runtime tool manager
+	manager := runtimetool.NewManager(ws)
+	
+	// Get all installed tools
+	tools := manager.ListTools()
+	if len(tools) == 0 {
+		return nil
+	}
+	
+	// Add commands for each tool
 	for _, tool := range tools {
-		toolCmd := &cobra.Command{
-			Use:   tool.Name,
-			Short: tool.Description,
-			Long:  fmt.Sprintf("%s - %s", tool.FullName, tool.Description),
-		}
-
-		// Add subcommands for each tool command
-		for _, cmdName := range tool.Commands {
-			cmd := createToolCommand(tool, cmdName)
-			toolCmd.AddCommand(cmd)
-		}
-
+		// Create tool command
+		toolCmd := createDynamicToolCommand(tool, manager)
 		rootCmd.AddCommand(toolCmd)
 	}
-
+	
 	return nil
+}
+
+// createDynamicToolCommand creates a cobra command for a runtime tool
+func createDynamicToolCommand(tool *runtimetool.RuntimeTool, manager *runtimetool.Manager) *cobra.Command {
+	// Extract short name from full tool name (e.g., "nimsforestwork" -> "work")
+	shortName := extractShortName(tool.Name())
+	
+	return &cobra.Command{
+		Use:   shortName,
+		Short: fmt.Sprintf("Run %s commands", tool.Name()),
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// First argument is the command, rest are arguments
+			command := args[0]
+			cmdArgs := args[1:]
+			
+			// Execute the command using the runtime tool manager
+			return manager.ExecuteCommand(context.Background(), tool.Name(), command, cmdArgs)
+		},
+	}
+}
+
+// extractShortName extracts the short name from a full tool name
+func extractShortName(fullName string) string {
+	// Remove "nimsforest" prefix if present
+	if strings.HasPrefix(fullName, "nimsforest") {
+		return strings.TrimPrefix(fullName, "nimsforest")
+	}
+	return fullName
 }
 
 // createToolCommand creates a cobra command that proxies to make

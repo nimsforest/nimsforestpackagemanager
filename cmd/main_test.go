@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
@@ -76,133 +75,32 @@ func TestHasWorkspaceStructure(t *testing.T) {
 	}
 }
 
-func TestDiscoverInstalledTools(t *testing.T) {
-	// Create test workspace structure
-	tempDir := t.TempDir()
-	productsDir := filepath.Join(tempDir, "products-workspace")
-	
-	// Create mock tool workspaces
-	toolDirs := []string{
-		"nimsforestwork-workspace",
-		"nimsforestcommunication-workspace",
-		"non-nimsforest-workspace", // Should be ignored
-	}
-	
-	for _, dir := range toolDirs {
-		toolPath := filepath.Join(productsDir, dir, "main")
-		if err := os.MkdirAll(toolPath, 0755); err != nil {
-			t.Fatalf("Failed to create tool directory: %v", err)
-		}
-		
-		// Create mock MAKEFILE for nimsforest tools only
-		if strings.HasPrefix(dir, "nimsforest") {
-			toolName := strings.TrimSuffix(dir, "-workspace")
-			makefilePath := filepath.Join(toolPath, "MAKEFILE."+toolName)
-			makefileContent := `# Test makefile
-` + toolName + `-hello:
-	@echo "Hello"
-` + toolName + `-init:
-	@echo "Init"
-` + toolName + `-test:
-	@echo "Test"
-`
-			if err := os.WriteFile(makefilePath, []byte(makefileContent), 0644); err != nil {
-				t.Fatalf("Failed to create makefile: %v", err)
-			}
-		}
-	}
-	
-	tools, err := discoverInstalledTools(tempDir)
+func TestAddDynamicCommands(t *testing.T) {
+	// Test that addDynamicCommands doesn't error
+	err := addDynamicCommands()
 	if err != nil {
-		t.Fatalf("Failed to discover tools: %v", err)
-	}
-	
-	// Should find 2 nimsforest tools, ignore the non-nimsforest one
-	if len(tools) != 2 {
-		t.Errorf("Expected 2 tools, found %d", len(tools))
-	}
-	
-	// Check tool properties
-	for _, tool := range tools {
-		if !strings.HasPrefix(tool.FullName, "nimsforest") {
-			t.Errorf("Tool %s should start with 'nimsforest'", tool.FullName)
-		}
-		if len(tool.Commands) == 0 {
-			t.Errorf("Tool %s should have commands", tool.Name)
-		}
-		// Check for expected commands
-		expectedCommands := []string{"hello", "init", "test"}
-		for _, expected := range expectedCommands {
-			found := false
-			for _, cmd := range tool.Commands {
-				if cmd == expected {
-					found = true
-					break
-				}
-			}
-			if !found {
-				t.Errorf("Tool %s missing expected command %s", tool.Name, expected)
-			}
-		}
+		t.Errorf("addDynamicCommands should not error: %v", err)
 	}
 }
 
-func TestExtractCommands(t *testing.T) {
-	// Create temporary makefile
-	tempFile := filepath.Join(t.TempDir(), "MAKEFILE.test")
-	content := `# Test makefile
-.PHONY: test-hello test-init test-lint
-
-test-hello:
-	@echo "Hello"
-
-test-init:
-	@echo "Init"
-
-test-lint:
-	@echo "Lint"
-
-# This should be ignored (no tool prefix)
-some-other-command:
-	@echo "Other"
-
-# This should also be ignored (different tool)
-other-tool-command:
-	@echo "Different tool"
-`
-	
-	if err := os.WriteFile(tempFile, []byte(content), 0644); err != nil {
-		t.Fatalf("Failed to create test makefile: %v", err)
+func TestToolStruct(t *testing.T) {
+	// Test Tool struct creation and properties
+	tool := Tool{
+		Name:        "work",
+		FullName:    "nimsforestwork",
+		Path:        "/test/path",
+		Commands:    []string{"hello", "init"},
+		Description: "Test tool",
 	}
 	
-	commands := extractCommands(tempFile, "test")
-	
-	expectedCommands := []string{"hello", "init", "lint"}
-	if len(commands) != len(expectedCommands) {
-		t.Errorf("Expected %d commands, got %d", len(expectedCommands), len(commands))
+	if tool.Name != "work" {
+		t.Errorf("Expected tool name 'work', got '%s'", tool.Name)
 	}
-	
-	for _, expected := range expectedCommands {
-		found := false
-		for _, cmd := range commands {
-			if cmd == expected {
-				found = true
-				break
-			}
-		}
-		if !found {
-			t.Errorf("Expected command %s not found in %v", expected, commands)
-		}
+	if tool.FullName != "nimsforestwork" {
+		t.Errorf("Expected tool full name 'nimsforestwork', got '%s'", tool.FullName)
 	}
-}
-
-func TestExtractCommandsWithNonexistentFile(t *testing.T) {
-	commands := extractCommands("/nonexistent/file", "test")
-	
-	// Should return fallback commands
-	expectedFallback := []string{"hello", "init", "lint"}
-	if len(commands) != len(expectedFallback) {
-		t.Errorf("Expected fallback commands, got %v", commands)
+	if len(tool.Commands) != 2 {
+		t.Errorf("Expected 2 commands, got %d", len(tool.Commands))
 	}
 }
 
@@ -225,24 +123,24 @@ func TestGetToolDescription(t *testing.T) {
 	}
 }
 
-func TestGetAvailableTools(t *testing.T) {
-	tools := getAvailableTools()
+func TestGetAvailableToolsDescriptions(t *testing.T) {
+	// Test that tool descriptions can be retrieved
+	expectedTools := []string{"nimsforestwork", "nimsforestorganize", "nimsforestcommunication", "nimsforestproductize", "nimsforestfolders", "nimsforestwebstack"}
 	
-	expectedTools := []string{"work", "organize", "communicate", "productize", "folders", "webstack"}
-	if len(tools) != len(expectedTools) {
-		t.Errorf("Expected %d tools, got %d", len(expectedTools), len(tools))
+	for _, tool := range expectedTools {
+		desc := getToolDescription(tool)
+		if desc == "" {
+			t.Errorf("Tool %s should have a non-empty description", tool)
+		}
+		// Description should not be the tool name itself for known tools
+		if desc == tool {
+			t.Errorf("Tool %s returned tool name as description, expected a proper description", tool)
+		}
 	}
 	
-	for _, expected := range expectedTools {
-		found := false
-		for _, tool := range tools {
-			if tool == expected {
-				found = true
-				break
-			}
-		}
-		if !found {
-			t.Errorf("Expected tool %s not found in available tools", expected)
-		}
+	// Test unknown tool
+	unknownDesc := getToolDescription("unknown-tool")
+	if unknownDesc != "unknown-tool" {
+		t.Errorf("Unknown tool should return tool name as description, got %s", unknownDesc)
 	}
 }

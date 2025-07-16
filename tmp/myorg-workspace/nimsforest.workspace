@@ -1,0 +1,6 @@
+nimsforest 1.0
+
+organization ./myorg-organization-workspace
+tools (
+    exampletool binary bin/exampletool latest
+)

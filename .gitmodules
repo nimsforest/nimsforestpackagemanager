@@ -1,0 +1,12 @@
+[submodule "mytest-workspace/products-workspace/nimsforestwork-workspace"]
+	path = mytest-workspace/products-workspace/nimsforestwork-workspace
+	url = https://github.com/nimsforest/nimsforestwork.git
+[submodule "mytest-workspace/products-workspace/nimsforestcommunication-workspace"]
+	path = mytest-workspace/products-workspace/nimsforestcommunication-workspace
+	url = https://github.com/nimsforest/nimsforestcommunication.git
+[submodule "mytest-workspace/products-workspace/nimsforestorganize-workspace"]
+	path = mytest-workspace/products-workspace/nimsforestorganize-workspace
+	url = https://github.com/nimsforest/nimsforestorganize.git
+[submodule "mytest-workspace/products-workspace/nimsforestwebstack-workspace"]
+	path = mytest-workspace/products-workspace/nimsforestwebstack-workspace
+	url = https://github.com/nimsforest/nimsforestwebstack.git
