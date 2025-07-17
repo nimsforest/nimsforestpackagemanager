@@ -235,9 +235,11 @@ tasks:
         echo "  Major:  v$((MAJOR + 1)).0.0"
         echo ""
         echo "Usage: task release VERSION=v$MAJOR.$MINOR.$((PATCH + 1))"
+        echo ""
+        echo "💡 Tip: Run 'task check-repo-status' to verify your repo is ready for release"
 
   release:
-    desc: "Complete release flow - Usage: task release VERSION=v0.1.4"
+    desc: "Complete release flow (requires pushed changes) - Usage: task release VERSION=v0.1.4"
     cmds:
       - |
         if [ -z "{{.VERSION}}" ]; then
@@ -247,69 +249,41 @@ tasks:
           exit 1
         fi
       - echo "🚀 Starting release {{.VERSION}}..."
+      - echo "📋 PREREQUISITE - This assumes all changes have been pushed to main branch"
+      - echo "   If you have unpushed changes, run - git push origin main"
+      - echo ""
       - task: ci
-      - echo "💾 Committing any pending changes..."
-      - git add -A
-      - 'git commit -m "Release {{.VERSION}}: Auto-commit pending changes" || echo "No changes to commit"'
-      - echo "📤 Pushing to origin..."
-      - 'git push origin main || (echo "⚠️  Push failed - you may need to push manually: git push origin main" && exit 0)'
-      - echo "📦 Building release artifacts..."
-      - task: release-artifacts
       - echo "🎉 Creating GitHub release {{.VERSION}}..."
       - 'gh release create {{.VERSION}} --title "Release {{.VERSION}}" --generate-notes --notes "Automated release with latest fixes and improvements."'
+      - echo "⏳ Waiting for release workflow to complete..."
+      - sleep 30
       - echo "🧪 Testing release..."
       - task: verify-release
       - echo "✅ Release {{.VERSION}} completed successfully!"
 
-  release-local:
-    desc: "Complete release flow for local development - Usage: task release-local VERSION=v0.1.4"
+  check-repo-status:
+    desc: "Check if repository has unpushed changes"
     cmds:
       - |
-        if [ -z "{{.VERSION}}" ]; then
-          echo "❌ VERSION is required!"
-          echo "Run 'task suggest-version' to see suggested versions"
-          echo "Usage: task release-local VERSION=v0.1.4"
-          exit 1
+        echo "🔍 Checking repository status..."
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "⚠️  You have uncommitted changes:"
+          git status --short
+          echo "   Run: git add -A && git commit -m 'Your message' && git push origin main"
+        else
+          echo "✅ No uncommitted changes"
         fi
-      - echo "🚀 Starting local release {{.VERSION}}..."
-      - task: ci
-      - echo "💾 Committing any pending changes..."
-      - git add -A
-      - 'git commit -m "Release {{.VERSION}}: Auto-commit pending changes" || echo "No changes to commit"'
-      - echo "📤 Pushing to origin (will prompt for authentication)..."
-      - git push origin main
-      - echo "📦 Building release artifacts..."
-      - task: release-artifacts
-      - echo "🎉 Creating GitHub release {{.VERSION}}..."
-      - 'gh release create {{.VERSION}} --title "Release {{.VERSION}}" --generate-notes --notes "Automated release with latest fixes and improvements."'
-      - echo "🧪 Testing release..."
-      - task: verify-release
-      - echo "✅ Release {{.VERSION}} completed successfully!"
-
-  release-no-push:
-    desc: "Release without pushing (manual push required) - Usage: task release-no-push VERSION=v0.1.4"
-    cmds:
-      - |
-        if [ -z "{{.VERSION}}" ]; then
-          echo "❌ VERSION is required!"
-          echo "Run 'task suggest-version' to see suggested versions"
-          echo "Usage: task release-no-push VERSION=v0.1.4"
-          exit 1
+        
+        LOCAL=$(git rev-parse @)
+        REMOTE=$(git rev-parse @{u} 2>/dev/null || echo "")
+        
+        if [ "$LOCAL" != "$REMOTE" ] && [ -n "$REMOTE" ]; then
+          echo "⚠️  You have unpushed commits:"
+          git log --oneline @{u}..HEAD
+          echo "   Run: git push origin main"
+        else
+          echo "✅ No unpushed commits"
         fi
-      - echo "🚀 Starting release {{.VERSION}} (no push)..."
-      - task: ci
-      - echo "💾 Committing any pending changes..."
-      - git add -A
-      - 'git commit -m "Release {{.VERSION}}: Auto-commit pending changes" || echo "No changes to commit"'
-      - 'echo "⚠️  Skipping push - you must run: git push origin main"'
-      - echo "📦 Building release artifacts..."
-      - task: release-artifacts
-      - echo "🎉 Creating GitHub release {{.VERSION}}..."
-      - 'gh release create {{.VERSION}} --title "Release {{.VERSION}}" --generate-notes --notes "Automated release with latest fixes and improvements."'
-      - echo "🧪 Testing release..."
-      - task: verify-release
-      - echo "✅ Release {{.VERSION}} completed successfully!"
-      - echo "📝 Don't forget to push - git push origin main"
 
   verify-release:
     desc: Download and test the latest release for current platform
