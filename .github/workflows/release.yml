@@ -1,35 +1,66 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types: [created]
 
 permissions:
   contents: write
 
 jobs:
-  goreleaser:
+  build:
+    name: Build and Release
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64, arm64]
+        exclude:
+          - goos: windows
+            goarch: arm64
+    
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.24'
+          go-version: '1.21'
+          cache: true
+
+      - name: Get dependencies
+        run: go mod download
 
       - name: Run tests
         run: go test ./...
 
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
-        with:
-          distribution: goreleaser
-          version: latest
-          args: release --clean
+      - name: Set binary name
+        id: binary
+        run: |
+          BINARY_NAME="nimsforestpm"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            BINARY_NAME="${BINARY_NAME}.exe"
+          fi
+          echo "name=${BINARY_NAME}" >> $GITHUB_OUTPUT
+          echo "asset_name=nimsforestpm_${{ matrix.goos }}_${{ matrix.goarch }}" >> $GITHUB_OUTPUT
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            echo "asset_name=nimsforestpm_${{ matrix.goos }}_${{ matrix.goarch }}.exe" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          go build -ldflags "-s -w" -o ${{ steps.binary.outputs.name }} ./cmd
+
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./${{ steps.binary.outputs.name }}
+          asset_name: ${{ steps.binary.outputs.asset_name }}
+          asset_content_type: application/octet-stream

@@ -1,215 +1,183 @@
 # NimsForest Package Manager
 
-**Bootstrap Event & Value-Driven Organization Workspaces**
+**Simple Go-based tool manager for the NimsForest ecosystem**
 
-NimsForest PM creates workspaces where organizations can explicitly optimize their coordination (organize) and value creation (productize) in an endless improvement cycle. This package manager bootstraps the complete workspace structure and orchestrates the nimsforest-organize and nimsforest-productize tools.
+A lightweight package manager that installs and manages NimsForest tools via `go get` and `go install`. No complex dependencies, no configuration files—just a simple wrapper around Go's native tooling.
 
-📖 **[Read the full philosophy and architecture guide →](docs/hello.md)**
+## Installation
+
+### Platform-Specific Installers
+```bash
+# Linux/macOS
+curl -fsSL get.nimsforest.com/install.sh | sh
+
+# Windows (PowerShell)
+irm get.nimsforest.com/install.ps1 | iex
+```
+
+The package manager will guide you through installing Go if you don't have it.
 
 ## Quick Start
 
-### 1. Install NimsForest PM
+### 1. Create Organization Workspace
 ```bash
-# Download and install the bootstrap binary
-curl -L https://install.nimsforest.com | sh
-# Binary is now available as 'nimsforestpm'
-```
-
-### 2. Bootstrap Organization Workspace
-```bash
-# Create complete workspace structure
-nimsforestpm bootstrap my-org-workspace
-
-# Or install tools individually  
-nimsforestpm install organize    # For organization coordination
-nimsforestpm install productize  # For product development
-nimsforestpm install os          # For real-time runtime coordination
-```
-
-### 3. What You Get
-```
-my-org-workspace/
-├── my-org-organization-workspace/  # Organization coordination (nimsforestorganize)
-│   ├── docs/purpose/           # Vision, mission, goals, strategy
-│   ├── docs/people/            # Teams, roles, skills, structure
-│   ├── docs/processes/         # Workflows, procedures, methods
-│   ├── docs/resources/         # Budget, tools, assets, constraints
-│   ├── docs/knowledge/         # Decisions made, lessons learned
-│   └── products/               # Git submodule links to products
-└── products-workspace/         # Product development ecosystem
-    ├── shared/                 # Common libraries, components, APIs
-    ├── product-a-workspace/    # nimsforest-productize value streams
-    │   ├── main/              # Main development branch
-    │   └── feature-branches/  # Git worktrees for parallel work
-    └── product-b-workspace/
-        ├── main/
-        └── feature-branches/
-```
-
-## The Full NimsForest Toolset
-
-### Core Philosophy
-Organizations are optimization engines where humans coordinate (organize) to create products that deliver user value (productize). Better coordination enables better products, which teaches better coordination—an endless improvement cycle.
-
-### Tool Responsibilities
-
-**nimsforest-pm** (this package manager):
-- Bootstraps complete workspace architecture
-- Orchestrates organize and productize tool installation
-- Provides seamless integration with no dependencies beyond Unix tools
-
-**nimsforest-organize**:
-- Creates event-driven organizational coordination structure
-- MECE (Mutually Exclusive, Collectively Exhaustive) documentation system
-- Purpose → People → Processes → Resources → Knowledge architecture
-
-**nimsforest-productize**:
-- Generates complete value stream repositories
-- Infrastructure as code (NixOS-style declarative systems)  
-- Built-in metrics, feedback loops, and communication systems
-- Communicate → Awareness → Usage → Feedback → Improve cycle
-
-## Installation Patterns
-
-### Complete Setup (Recommended)
-```bash
-# Bootstrap everything at once
-nimsforest-pm bootstrap my-org-workspace
+# Create organizational workspace structure
+nimsforestpm create-organization-workspace my-org
 cd my-org-workspace
-
-# Initialize organization coordination
-cd my-org-organization-workspace/main
-nimsforest-organize init
-
-# Create your first product
-cd ../../products-workspace
-nimsforest-productize create my-first-product
-cd my-first-product-workspace/main
-nimsforest-productize init
 ```
 
-### Individual Tool Installation
+### 2. Install Tools
 ```bash
-# Just organization coordination
-nimsforest-pm install organize
-nimsforest-organize init
+# Install individual tools
+nimsforestpm install organize
+nimsforestpm install work
+nimsforestpm install communicate
 
-# Just product development  
-nimsforest-pm install productize
-nimsforest-productize create my-product
+# Or install all tools at once
+nimsforestpm install all
 ```
 
-### Legacy Integration
+### 3. Check Status
 ```bash
-# Add to existing project as git submodule
-git submodule add https://github.com/nimsforest/nimsforest-pm tools/nimsforest-pm
-cd tools/nimsforest-pm
-make legacy-install ORG_NAME=my-company
+nimsforestpm status
 ```
 
-## Event-Driven Integration
+## Available Tools
 
-### Organization → Product Events
-- Organizational changes trigger events that flow to product development
-- Strategy updates automatically sync to product roadmaps
-- Resource changes update product capacity planning
-- Team structure changes update product ownership
+- **organize**: Organization coordination and structure management
+- **work**: Work and task management
+- **communicate**: Communication and collaboration tools
+- **webstack**: Web development and deployment
+- **productize**: Product development workflows
+- **folders**: File and folder management utilities
 
-### Product → Organization Events  
-- Product feedback generates events that improve organizational coordination
-- User metrics inform organizational decision-making
-- Product learnings update organizational knowledge base
-- Value creation data drives coordination optimization
-
-### Continuous Optimization Loop
-1. Organization coordinates better → Products create more value
-2. Products create more value → Organization learns coordination patterns  
-3. Organization learns coordination patterns → Organization coordinates better
-4. Endless cycle of improvement
-
-## Package Manager Commands
+## Commands
 
 ### Core Commands
 ```bash
-nimsforest-pm bootstrap <workspace-name>    # Create complete workspace
-nimsforest-pm install organize             # Install organization tools
-nimsforest-pm install productize           # Install product development tools
-nimsforest-pm status                        # Check installation status
-nimsforest-pm update                        # Update all installed tools
+nimsforestpm create-organization-workspace <name>  # Create workspace structure
+nimsforestpm install <tool> [tool2] [tool3]       # Install tools
+nimsforestpm install all                           # Install all tools
+nimsforestpm update [tool]                         # Update tools (all if no tool specified)
+nimsforestpm status                                # Show installation status
+nimsforestpm hello                                 # System compatibility check
+nimsforestpm hello --dev                           # Developer mode compatibility check
+nimsforestpm validate <tool>                       # Validate tool installation
 ```
 
-### Organization Commands (via nimsforest-organize)
+### Installation Examples
 ```bash
-nimsforest-organize init                    # Initialize org coordination structure
-nimsforest-organize validate               # Validate MECE structure
-nimsforest-organize events                 # Show active event streams
-nimsforest-organize metrics                # Organization coordination metrics
+# Install single tool
+nimsforestpm install organize
+
+# Install multiple tools
+nimsforestpm install organize work communicate
+
+# Install all available tools
+nimsforestpm install all
+
+# Install from full repository path
+nimsforestpm install github.com/nimsforest/nimsforestorganize
 ```
 
-### Product Commands (via nimsforest-productize)
-```bash
-nimsforest-productize create <product-name>  # Create new product workspace
-nimsforest-productize init                   # Initialize value stream structure  
-nimsforest-productize deploy                 # Deploy infrastructure as code
-nimsforest-productize metrics                # Product value metrics
-nimsforest-productize feedback               # User feedback analysis
+## How It Works
+
+1. **Tool Registry**: Tools are defined in `docs/tools.json` with repository mappings
+2. **Go-based Installation**: Uses `go get` and `go install` to install tools to `$GOPATH/bin`
+3. **No Configuration**: No workspace files or complex configuration needed
+4. **Simple Management**: Tools are standard Go binaries in your PATH
+
+## Workspace Structure
+
 ```
-
-### Legacy Support (Makefile-based)
-```bash
-make nimsforestpm-hello                     # System compatibility check
-make nimsforestpm-create-organisation       # Legacy workspace creation
-make nimsforestpm-install COMPONENTS=       # Legacy component installation
+my-org-workspace/
+├── my-org-organization-workspace/    # Organization coordination
+│   └── main/                         # Main organization repo
+│       └── README.md                 # Organization documentation
+└── products-workspace/               # Product development area
 ```
-
-## Why NimsForest?
-
-### For Organizations
-- **Explicit Coordination**: Make invisible organizational patterns visible and improvable
-- **Value-Driven**: Every decision anchored to user value creation
-- **Event-Driven**: Changes trigger measurable responses across the system
-- **Continuous Learning**: Product feedback improves organizational coordination
-
-### For Developers
-- **Infrastructure as Code**: Declarative, reproducible systems (NixOS-style)
-- **Git Worktree Ready**: `/main/` structure supports advanced branching workflows
-- **No Dependencies**: Pure Unix tools (make, bash) - works everywhere
-- **Modular**: Install only what you need, when you need it
-
-### For Teams
-- **MECE Structure**: Mutually Exclusive, Collectively Exhaustive organization
-- **Clear Ownership**: Every product has its own complete value stream
-- **Automatic Integration**: Events flow between organization and products
-- **Measurable Impact**: Track value creation from coordination to customer
-
-Perfect for organizations ready to treat coordination like infrastructure as code—explicit, measurable, and continuously optimized.
 
 ## Tool Development
 
-To develop tools compatible with nimsforest package manager, see the [Developer Instructions](pkg/DEVELOPER_INSTRUCTIONS.md) and the [Tool Package Documentation](pkg/tool/README.md).
+Tools are standard Go programs that can be installed via `go install`. To create a compatible tool:
 
-### Quick Start for Tool Developers
+1. Build as a Go binary
+2. Implement standard commands (version, help, etc.)
+3. Add to the tools registry for easy installation
 
-```bash
-# Add dependency to your tool project
-go get github.com/nimsforest/nimsforestpackagemanager/pkg/tool@latest
+See [pkg/tool/README.md](pkg/tool/README.md) for the tool interface specification.
 
-# Import in your code
-import "github.com/nimsforest/nimsforestpackagemanager/pkg/tool"
+### Simple Tool Example
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "github.com/nimsforest/nimsforestpackagemanager/pkg/tool"
+)
+
+func main() {
+    // Create a simple tool
+    mytool := tool.NewSimpleTool("mytool", "1.0.0", "My awesome tool")
+    
+    // Add commands
+    mytool.AddCommand("hello", func(ctx context.Context, args []string) error {
+        fmt.Println("Hello from mytool!")
+        return nil
+    })
+    
+    // Handle standard main logic
+    mytool.HandleMain()
+}
 ```
 
-See the [Migration Guide](pkg/tool/README.md#migration-guide) for step-by-step instructions on migrating existing tools.
+## Development
 
-### Binary Installation
-
-Once your tool is built, users can install it using:
-
+### Build
 ```bash
-# Build your tool
-go build -o mytool ./cmd/mytool
+# Build for development
+task build
 
-# Install via package manager
-nimsforestpm install --name mytool --path ./mytool
+# Build release binaries for all platforms
+task build-release
+
+# Full release with checksums
+task release
 ```
 
-Tools are automatically tracked in workspace files and appear in `nimsforestpm status`.
+### Releases
+Binary releases are automatically built and published via GitHub Actions when a new release is created. The workflow builds cross-platform binaries for:
+- Linux (amd64, arm64)
+- macOS (amd64, arm64) 
+- Windows (amd64)
+
+To create a release:
+1. Create a git tag: `git tag v1.0.0`
+2. Push the tag: `git push origin v1.0.0`
+3. Create a GitHub release from the tag
+4. Binaries will be automatically built and attached to the release
+
+### Test
+```bash
+# Run tests
+task test
+
+# Run integration tests
+task test-integration
+
+# Run all tests
+task test-all
+```
+
+## Key Features
+
+- **Zero Dependencies**: No complex setup or configuration files
+- **Go Native**: Leverages Go's built-in package management
+- **Cross-Platform**: Works on Linux, macOS, and Windows
+- **Simple**: Just a wrapper around `go get` and `go install`
+- **Extensible**: Easy to add new tools to the registry
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.

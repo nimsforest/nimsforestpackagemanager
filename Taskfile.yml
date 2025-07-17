@@ -5,6 +5,7 @@ vars:
   BUILD_DIR: ./bin
   CMD_DIR: ./cmd
   INTEGRATION_TAG: integration
+  EXE_EXT: '{{if eq OS "windows"}}.exe{{end}}'
 
 tasks:
   default:
@@ -14,15 +15,15 @@ tasks:
 
   build:
     desc: Build the application
+    deps: [ensure-build-dir]
     cmds:
-      - mkdir -p {{.BUILD_DIR}}
-      - go build -o {{.BUILD_DIR}}/{{.BINARY_NAME}} {{.CMD_DIR}}
+      - go build -o {{.BUILD_DIR}}/{{.BINARY_NAME}}{{.EXE_EXT}} {{.CMD_DIR}}
     sources:
       - "**/*.go"
       - go.mod
       - go.sum
     generates:
-      - "{{.BUILD_DIR}}/{{.BINARY_NAME}}"
+      - "{{.BUILD_DIR}}/{{.BINARY_NAME}}{{.EXE_EXT}}"
 
   clean:
     desc: Clean build artifacts
@@ -96,27 +97,25 @@ tasks:
     desc: Run the application with arguments
     deps: [build]
     cmds:
-      - "{{.BUILD_DIR}}/{{.BINARY_NAME}} {{.CLI_ARGS}}"
+      - "{{.BUILD_DIR}}/{{.BINARY_NAME}}{{.EXE_EXT}} {{.CLI_ARGS}}"
 
-  workspace-test:
-    desc: Test workspace functionality
+  ensure-build-dir:
+    desc: Ensure build directory exists (cross-platform)
     cmds:
-      - go test -v ./internal/workspace/...
+      - cmd: powershell -Command "New-Item -ItemType Directory -Force -Path {{.BUILD_DIR}}"
+        platforms: [windows]
+      - cmd: mkdir -p {{.BUILD_DIR}}
+        platforms: [linux, darwin]
 
-  runtimetool-test:
-    desc: Test runtime tool functionality
+  ensure-release-dir:
+    desc: Ensure release directory exists (cross-platform)
     cmds:
-      - go test -v ./internal/runtimetool/...
+      - cmd: powershell -Command "New-Item -ItemType Directory -Force -Path {{.BUILD_DIR}}/release"
+        platforms: [windows]
+      - cmd: mkdir -p {{.BUILD_DIR}}/release
+        platforms: [linux, darwin]
 
-  tool-interface-test:
-    desc: Test tool interface functionality
-    cmds:
-      - go test -v ./pkg/tool/...
 
-  tool-integration-test:
-    desc: Run tool interface integration tests
-    cmds:
-      - go test -tags={{.INTEGRATION_TAG}} -v ./integration/tool_interface_test.go ./integration/common_test.go
 
   quick-test:
     desc: Run quick tests (unit only, no integration)
@@ -134,93 +133,25 @@ tasks:
   validate-tool:
     desc: Validate a tool at specified path
     cmds:
-      - go run ./cmd validate --tool-path={{.TOOL_PATH}} {{.CLI_ARGS}}
-
-  validate-example:
-    desc: Validate the example tool in pkg/tool
-    cmds:
-      - go test -v ./pkg/tool/ -run TestToolValidation
-
-  build-example:
-    desc: Build the example tool for integration testing
-    cmds:
-      - mkdir -p {{.BUILD_DIR}}
-      - go build -o {{.BUILD_DIR}}/example-tool ./integration/example-tool
-    sources:
-      - "integration/example-tool/**/*.go"
-      - "pkg/tool/**/*.go"
-      - go.mod
-      - go.sum
-    generates:
-      - "{{.BUILD_DIR}}/example-tool"
+      - go run ./cmd validate {{.TOOL_PATH}} {{.CLI_ARGS}}
 
   build-and-test:
-    desc: Build binaries and run full integration tests
-    deps: [build, build-example]
+    desc: Build binaries and run integration tests
+    deps: [build]
     cmds:
-      - go test -v ./integration
-
-  full-cycle-test:
-    desc: Run complete build → install → validate cycle test
-    deps: [build, build-example]
-    cmds:
-      - go test -v ./integration -run TestFullBuildInstallValidateCycle
-
-  example-tool-test:
-    desc: Test the example tool binary directly
-    deps: [build-example]
-    cmds:
-      - echo "Testing example tool binary..."
-      - "{{.BUILD_DIR}}/example-tool hello"
-      - "{{.BUILD_DIR}}/example-tool version"
-      - "{{.BUILD_DIR}}/example-tool status"
-      - echo "Example tool binary tests passed!"
+      - go test -tags={{.INTEGRATION_TAG}} -v ./integration/...
 
   stability-test:
     desc: Run all stability and integration tests
     cmds:
       - task: build-and-test
-      - task: example-tool-test
       - echo "All stability tests passed!"
-
-  validate-cycle:
-    desc: Validate complete build → install → validate cycle
-    deps: [build, build-example]
-    cmds:
-      - go test -v ./integration -run TestPreBuiltBinaryCycle
-      - go test -v ./integration -run TestTaskSystemIntegration
-      - echo "Complete cycle validation passed!"
-
-  test-binary-install:
-    desc: Test the new binary installation functionality
-    deps: [build, build-example]
-    cmds:
-      - echo "=== Testing Binary Installation ==="
-      - mkdir -p temp-test-install
-      - cd temp-test-install && ../{{.BUILD_DIR}}/nimsforestpm create-organization-workspace test-install
-      - echo "=== Installing Example Tool via Binary Install ==="
-      - cd temp-test-install/test-install-workspace && ../../{{.BUILD_DIR}}/nimsforestpm install --name example-tool --path ../../{{.BUILD_DIR}}/example-tool
-      - echo "=== Checking Status ==="
-      - cd temp-test-install/test-install-workspace && ../../{{.BUILD_DIR}}/nimsforestpm status
-      - echo "=== Testing Installed Tool ==="
-      - cd temp-test-install/test-install-workspace && ./bin/example-tool hello
-      - cd temp-test-install/test-install-workspace && ./bin/example-tool version
-      - echo "=== Cleaning Up ==="
-      - rm -rf temp-test-install
-      - echo "✓ Binary installation test passed!"
-
-  test-binary-install-integration:
-    desc: Run integration tests for binary installation
-    deps: [build, build-example]
-    cmds:
-      - go test -v ./integration -run TestBinaryInstallation
-      - echo "✓ Binary installation integration tests passed!"
 
   validate-binary:
     desc: Validate a binary tool by path (use BINARY_PATH variable)
     deps: [build]
     cmds:
-      - 'test -n "{{.BINARY_PATH}}" || (echo "Error: BINARY_PATH variable required. Usage: task validate-binary BINARY_PATH=./bin/example-tool" && exit 1)'
+      - 'test -n "{{.BINARY_PATH}}" || (echo "Error: BINARY_PATH variable required. Usage: task validate-binary BINARY_PATH=./bin/some-tool" && exit 1)'
       - 'echo "=== Validating Binary Tool: {{.BINARY_PATH}} ==="'
       - 'test -f "{{.BINARY_PATH}}" || (echo "❌ Binary not found: {{.BINARY_PATH}}" && exit 1)'
       - 'echo "✓ Binary exists: {{.BINARY_PATH}}"'
@@ -233,20 +164,46 @@ tasks:
       - '{{.BINARY_PATH}} version || echo "Binary does not support version command"'
       - 'echo "✓ Binary tool validation passed!"'
 
-  validate-example-tool:
-    desc: Validate the example tool binary
-    deps: [build, build-example]
+  build-release:
+    desc: Build release binaries for all platforms
+    deps: [ensure-release-dir]
     cmds:
-      - task: validate-binary
-        vars:
-          BINARY_PATH: "{{.BUILD_DIR}}/example-tool"
+      - task: build-linux-amd64
+      - task: build-linux-arm64
+      - task: build-darwin-amd64
+      - task: build-darwin-arm64
+      - task: build-windows-amd64
+      - echo "All release binaries built in {{.BUILD_DIR}}/release/"
 
-  validate-full-cycle:
-    desc: Test complete cycle including new binary installation
-    deps: [build, build-example]
+  build-linux-amd64:
+    desc: Build Linux AMD64 binary
     cmds:
-      - task: validate-cycle
-      - task: test-binary-install
-      - task: test-binary-install-integration
-      - task: validate-example-tool
-      - echo "✓ Complete validation with binary installation passed!"
+      - GOOS=linux GOARCH=amd64 go build -o {{.BUILD_DIR}}/release/{{.BINARY_NAME}}_linux_amd64 {{.CMD_DIR}}
+
+  build-linux-arm64:
+    desc: Build Linux ARM64 binary
+    cmds:
+      - GOOS=linux GOARCH=arm64 go build -o {{.BUILD_DIR}}/release/{{.BINARY_NAME}}_linux_arm64 {{.CMD_DIR}}
+
+  build-darwin-amd64:
+    desc: Build macOS AMD64 binary
+    cmds:
+      - GOOS=darwin GOARCH=amd64 go build -o {{.BUILD_DIR}}/release/{{.BINARY_NAME}}_darwin_amd64 {{.CMD_DIR}}
+
+  build-darwin-arm64:
+    desc: Build macOS ARM64 binary (Apple Silicon)
+    cmds:
+      - GOOS=darwin GOARCH=arm64 go build -o {{.BUILD_DIR}}/release/{{.BINARY_NAME}}_darwin_arm64 {{.CMD_DIR}}
+
+  build-windows-amd64:
+    desc: Build Windows AMD64 binary
+    cmds:
+      - GOOS=windows GOARCH=amd64 go build -o {{.BUILD_DIR}}/release/{{.BINARY_NAME}}_windows_amd64.exe {{.CMD_DIR}}
+
+  release:
+    desc: Full release build with checksums
+    deps: [build-release]
+    cmds:
+      - cd {{.BUILD_DIR}}/release && sha256sum * > checksums.txt
+      - echo "Release artifacts with checksums created in {{.BUILD_DIR}}/release/"
+      - ls -la {{.BUILD_DIR}}/release/
