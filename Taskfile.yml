@@ -210,6 +210,7 @@ tasks:
 
   suggest-version:
     desc: Suggest the next version number based on current releases
+    silent: true
     cmds:
       - |
         echo "Current releases:"
@@ -240,6 +241,7 @@ tasks:
 
   release:
     desc: "Complete release flow (requires pushed changes) - Usage: task release VERSION=v0.1.4"
+    silent: true
     cmds:
       - |
         if [ -z "{{.VERSION}}" ]; then
@@ -263,6 +265,7 @@ tasks:
 
   check-repo-status:
     desc: "Check if repository has unpushed changes"
+    silent: true
     cmds:
       - |
         echo "🔍 Checking repository status..."
@@ -287,6 +290,7 @@ tasks:
 
   verify-release:
     desc: Download and test the latest release for current platform
+    silent: true
     cmds:
       - |
         if [ -z "{{.VERSION}}" ]; then
