@@ -50,17 +50,17 @@ func ResolveToolRepository(toolName string) (string, error) {
 	if strings.Contains(toolName, "/") {
 		return toolName, nil
 	}
-	
+
 	// Load registry and look up tool
 	reg, err := LoadRegistry()
 	if err != nil {
 		return "", err
 	}
-	
+
 	if tool, exists := reg.Tools[toolName]; exists {
 		return tool.Repository, nil
 	}
-	
+
 	return "", fmt.Errorf("unknown tool: %s. Available tools: %s", toolName, strings.Join(AvailableTools(), ", "))
 }
 
@@ -70,7 +70,7 @@ func InstallTool(toolName string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	fmt.Printf("Installing %s from %s...\n", toolName, repo)
 
 	// Step 1: go get the tool
@@ -100,7 +100,7 @@ func UpdateTool(toolName string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	fmt.Printf("Updating %s from %s...\n", toolName, repo)
 
 	// Step 1: go get -u the tool
@@ -146,7 +146,7 @@ func AvailableTools() []string {
 	if err != nil {
 		return []string{} // Return empty if registry can't be loaded
 	}
-	
+
 	tools := make([]string, 0, len(reg.Tools))
 	for name := range reg.Tools {
 		tools = append(tools, name)
@@ -158,7 +158,7 @@ func AvailableTools() []string {
 func InstalledTools() []string {
 	available := AvailableTools()
 	installed := make([]string, 0)
-	
+
 	for _, tool := range available {
 		if IsToolInstalled(tool) {
 			installed = append(installed, tool)
@@ -173,10 +173,10 @@ func GetToolInfo(toolName string) (ToolInfo, error) {
 	if err != nil {
 		return ToolInfo{}, err
 	}
-	
+
 	if tool, exists := reg.Tools[toolName]; exists {
 		return tool, nil
 	}
-	
+
 	return ToolInfo{}, fmt.Errorf("unknown tool: %s", toolName)
 }

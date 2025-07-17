@@ -3,7 +3,7 @@ module github.com/nimsforest/nimsforestpackagemanager
 go 1.24
 
 require (
-	github.com/nimsforest/nimsforesttool v0.0.0-20250717111356-bf076e1c186c
+	github.com/nimsforest/nimsforesttool v0.0.0-20250717143438-a4576f4bb3e1
 	github.com/spf13/cobra v1.8.0
 )
 

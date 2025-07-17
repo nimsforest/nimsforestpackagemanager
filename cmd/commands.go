@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/nimsforest/nimsforestpackagemanager/internal/registry"
 	"github.com/nimsforest/nimsforesttool/tool"
+	"github.com/spf13/cobra"
 )
 
 // Command initialization
@@ -19,7 +19,7 @@ func init() {
 	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(helloCmd)
 	rootCmd.AddCommand(validateCmd)
-	
+
 	// Initialize command flags
 	helloCmd.Flags().BoolP("dev", "d", false, "Enable developer mode (checks for additional development tools)")
 }
@@ -52,7 +52,7 @@ Examples:
 		if len(args) == 1 && args[0] == "all" {
 			args = registry.AvailableTools()
 		}
-		
+
 		// Install each tool
 		for _, toolName := range args {
 			if err := registry.InstallTool(toolName); err != nil {
@@ -85,7 +85,7 @@ If no tools are specified, all installed tools will be updated.`,
 				return
 			}
 		}
-		
+
 		// Update specific tools
 		for _, toolName := range args {
 			if err := registry.UpdateTool(toolName); err != nil {
@@ -127,29 +127,28 @@ This checks if the tool supports the required commands and interface.`,
 // COMMAND IMPLEMENTATIONS
 // ============================================================================
 
-
 // showSimpleStatus displays the current status of installed tools
 func showSimpleStatus() {
 	fmt.Println("=== NimsForest Tools Status ===")
-	
+
 	available := registry.AvailableTools()
 	installed := registry.InstalledTools()
-	
+
 	fmt.Printf("Available tools: %s\n", strings.Join(available, ", "))
 	fmt.Printf("Installed tools: %s\n", strings.Join(installed, ", "))
-	
+
 	if len(installed) == 0 {
 		fmt.Println("\nNo tools installed. Use 'nimsforestpm install <tool>' to install tools.")
 		return
 	}
-	
+
 	fmt.Println("\nTool Details:")
 	for _, toolName := range available {
 		status := "❌ Not installed"
 		if registry.IsToolInstalled(toolName) {
 			status = "✅ Installed"
 		}
-		
+
 		// Get tool info for description
 		if info, err := registry.GetToolInfo(toolName); err == nil {
 			fmt.Printf("  %s: %s - %s\n", toolName, status, info.Description)
@@ -164,7 +163,7 @@ func runHello(devMode bool) error {
 	fmt.Println("=== NimsForest Package Manager ===")
 	fmt.Println("System Compatibility Check")
 	fmt.Println("")
-	
+
 	// Check Go installation
 	if _, err := exec.LookPath("go"); err != nil {
 		fmt.Printf("❌ Go not found\n")
@@ -176,7 +175,7 @@ func runHello(devMode bool) error {
 		fmt.Printf("\nAfter installing Go, run 'nimsforestpm hello' again to verify.\n")
 		return fmt.Errorf("Go installation required")
 	}
-	
+
 	// Get Go version
 	cmd := exec.Command("go", "version")
 	output, err := cmd.Output()
@@ -184,7 +183,7 @@ func runHello(devMode bool) error {
 		return fmt.Errorf("failed to get Go version: %w", err)
 	}
 	fmt.Printf("✓ %s", output)
-	
+
 	// Check Git installation
 	if _, err := exec.LookPath("git"); err != nil {
 		fmt.Printf("❌ Git not found\n")
@@ -196,7 +195,7 @@ func runHello(devMode bool) error {
 		fmt.Printf("\nAfter installing Git, run 'nimsforestpm hello' again to verify.\n")
 		return fmt.Errorf("Git installation required")
 	}
-	
+
 	// Get Git version
 	cmd = exec.Command("git", "--version")
 	output, err = cmd.Output()
@@ -204,11 +203,11 @@ func runHello(devMode bool) error {
 		return fmt.Errorf("failed to get Git version: %w", err)
 	}
 	fmt.Printf("✓ %s", output)
-	
+
 	// Developer mode checks
 	if devMode {
 		fmt.Println("=== Developer Mode Checks ===")
-		
+
 		// Check for Task (task runner)
 		if _, err := exec.LookPath("task"); err != nil {
 			fmt.Printf("❌ Task not found\n")
@@ -228,10 +227,10 @@ func runHello(devMode bool) error {
 				fmt.Printf("✓ Task %s", output)
 			}
 		}
-		
+
 		fmt.Println("")
 	}
-	
+
 	fmt.Println("✓ System is ready for NimsForest!")
 	fmt.Println("")
 	fmt.Println("Next steps:")
@@ -239,7 +238,7 @@ func runHello(devMode bool) error {
 	fmt.Println("  nimsforestworkspace create <org-name>")
 	fmt.Println("  nimsforestpm install <tool-name>")
 	fmt.Println("  nimsforestpm status")
-	
+
 	if devMode {
 		fmt.Println("")
 		fmt.Println("Development commands:")
@@ -247,14 +246,14 @@ func runHello(devMode bool) error {
 		fmt.Println("  task test          # Run tests")
 		fmt.Println("  task build-release # Build release binaries")
 	}
-	
+
 	return nil
 }
 
 // validateTool validates that a tool conforms to the package manager interface
 func validateTool(toolName string) error {
 	var toolPath string
-	
+
 	// Check if it's a direct path to a tool binary
 	if strings.Contains(toolName, "/") {
 		// Direct path provided
@@ -264,7 +263,7 @@ func validateTool(toolName string) error {
 		if !registry.IsToolInstalled(toolName) {
 			return fmt.Errorf("tool %s is not installed. Run 'nimsforestpm install %s' first", toolName, toolName)
 		}
-		
+
 		// Get tool path from GOPATH
 		gopath := os.Getenv("GOPATH")
 		if gopath == "" {
@@ -274,31 +273,30 @@ func validateTool(toolName string) error {
 			}
 			gopath = filepath.Join(home, "go")
 		}
-		
+
 		toolPath = filepath.Join(gopath, "bin", toolName)
 	}
-	
+
 	// Validate tool using the package manager interface
 	if err := tool.ValidateTool(toolPath); err != nil {
 		return fmt.Errorf("tool validation failed: %v", err)
 	}
-	
+
 	// Get tool info
 	info, err := tool.QueryTool(toolPath)
 	if err != nil {
 		return fmt.Errorf("failed to query tool info: %v", err)
 	}
-	
+
 	fmt.Printf("✓ Tool %s is valid\n", toolName)
 	fmt.Printf("  Name: %s\n", info.Name)
 	fmt.Printf("  Version: %s\n", info.Version)
 	fmt.Printf("  Description: %s\n", info.Description)
 	fmt.Printf("  Commands: %s\n", strings.Join(info.Commands, ", "))
-	
+
 	return nil
 }
 
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
-
