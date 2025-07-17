@@ -200,10 +200,127 @@ tasks:
     cmds:
       - GOOS=windows GOARCH=amd64 go build -o {{.BUILD_DIR}}/release/{{.BINARY_NAME}}_windows_amd64.exe {{.CMD_DIR}}
 
-  release:
+  release-artifacts:
     desc: Full release build with checksums
     deps: [build-release]
     cmds:
       - cd {{.BUILD_DIR}}/release && sha256sum * > checksums.txt
       - echo "Release artifacts with checksums created in {{.BUILD_DIR}}/release/"
       - ls -la {{.BUILD_DIR}}/release/
+
+  suggest-version:
+    desc: Suggest the next version number based on current releases
+    cmds:
+      - |
+        echo "Current releases:"
+        gh release list --limit 5 || echo "No releases found"
+        echo ""
+        LAST_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName' 2>/dev/null)
+        if [ -z "$LAST_TAG" ] || [ "$LAST_TAG" = "null" ]; then
+          LAST_TAG="v0.0.0"
+        fi
+        echo "Last version: $LAST_TAG"
+        
+        # Extract version parts (assuming format v0.1.2)
+        VERSION_PART=$(echo $LAST_TAG | sed 's/^v//')
+        MAJOR=$(echo $VERSION_PART | cut -d. -f1)
+        MINOR=$(echo $VERSION_PART | cut -d. -f2)
+        PATCH=$(echo $VERSION_PART | cut -d. -f3)
+        
+        # Suggest next versions
+        echo ""
+        echo "Suggested next versions:"
+        echo "  Patch:  v$MAJOR.$MINOR.$((PATCH + 1))"
+        echo "  Minor:  v$MAJOR.$((MINOR + 1)).0"
+        echo "  Major:  v$((MAJOR + 1)).0.0"
+        echo ""
+        echo "Usage: task release VERSION=v$MAJOR.$MINOR.$((PATCH + 1))"
+
+  release:
+    desc: "Complete release flow - Usage: task release VERSION=v0.1.4"
+    cmds:
+      - |
+        if [ -z "{{.VERSION}}" ]; then
+          echo "❌ VERSION is required!"
+          echo "Run 'task suggest-version' to see suggested versions"
+          echo "Usage: task release VERSION=v0.1.4"
+          exit 1
+        fi
+      - echo "🚀 Starting release {{.VERSION}}..."
+      - task: ci
+      - echo "💾 Committing any pending changes..."
+      - git add -A
+      - 'git commit -m "Release {{.VERSION}}: Auto-commit pending changes" || echo "No changes to commit"'
+      - git push origin main
+      - echo "📦 Building release artifacts..."
+      - task: release-artifacts
+      - echo "🎉 Creating GitHub release {{.VERSION}}..."
+      - 'gh release create {{.VERSION}} --title "Release {{.VERSION}}" --generate-notes --notes "Automated release with latest fixes and improvements."'
+      - echo "🧪 Testing release..."
+      - task: verify-release
+      - echo "✅ Release {{.VERSION}} completed successfully!"
+
+  verify-release:
+    desc: Download and test the latest release for current platform
+    cmds:
+      - |
+        if [ -z "{{.VERSION}}" ]; then
+          LATEST_VERSION=$(gh release list --limit 1 --json tagName -q '.[0].tagName' 2>/dev/null)
+        else
+          LATEST_VERSION={{.VERSION}}
+        fi
+        
+        echo "Testing release: $LATEST_VERSION"
+        
+        # Determine platform-specific binary name
+        if [ "{{OS}}" = "windows" ]; then
+          BINARY_NAME="nimsforestpm_{{OS}}_{{ARCH}}.exe"
+        else
+          BINARY_NAME="nimsforestpm_{{OS}}_{{ARCH}}"
+        fi
+        
+        # Create platform-agnostic test directory
+        if [ "{{OS}}" = "windows" ]; then
+          TEST_DIR="${TEMP:-C:/temp}/test-release-$LATEST_VERSION"
+        else
+          TEST_DIR="${TMPDIR:-/tmp}/test-release-$LATEST_VERSION"
+        fi
+        
+        mkdir -p $TEST_DIR
+        
+        gh release download $LATEST_VERSION --pattern "$BINARY_NAME" --dir $TEST_DIR
+        chmod +x $TEST_DIR/$BINARY_NAME
+        
+        echo "Testing binary: $TEST_DIR/$BINARY_NAME"
+        $TEST_DIR/$BINARY_NAME hello
+        
+        echo "✅ Release $LATEST_VERSION verified successfully!"
+
+  verify-all-platforms:
+    desc: Download and show all platform binaries for verification
+    cmds:
+      - |
+        if [ -z "{{.VERSION}}" ]; then
+          LATEST_VERSION=$(gh release list --limit 1 --json tagName -q '.[0].tagName' 2>/dev/null)
+        else
+          LATEST_VERSION={{.VERSION}}
+        fi
+        
+        echo "Downloading all binaries for release: $LATEST_VERSION"
+        
+        # Create platform-agnostic test directory
+        if [ "{{OS}}" = "windows" ]; then
+          TEST_DIR="${TEMP:-C:/temp}/test-all-platforms-$LATEST_VERSION"
+        else
+          TEST_DIR="${TMPDIR:-/tmp}/test-all-platforms-$LATEST_VERSION"
+        fi
+        
+        mkdir -p $TEST_DIR
+        
+        # Download all platform binaries
+        gh release download $LATEST_VERSION --dir $TEST_DIR
+        
+        echo "Downloaded binaries:"
+        ls -la $TEST_DIR/
+        
+        echo "✅ All platform binaries downloaded to: $TEST_DIR"
