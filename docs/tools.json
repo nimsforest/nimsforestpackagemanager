@@ -1,0 +1,34 @@
+{
+  "tools": {
+    "workspace": {
+      "repository": "github.com/nimsforest/nimsforestworkspace",
+      "description": "Workspace creation and management"
+    },
+    "organize": {
+      "repository": "github.com/nimsforest/nimsforestorganize",
+      "description": "Organization coordination and structure management"
+    },
+    "work": {
+      "repository": "github.com/nimsforest/nimsforestwork",
+      "description": "Work management and productivity tools"
+    },
+    "communicate": {
+      "repository": "github.com/nimsforest/nimsforestcommunicate",
+      "description": "Communication and collaboration tools"
+    },
+    "webstack": {
+      "repository": "github.com/nimsforest/nimsforestwebstack",
+      "description": "Web development and deployment stack"
+    },
+    "productize": {
+      "repository": "github.com/nimsforest/nimsforestproductize",
+      "description": "Product development and value stream management"
+    },
+    "folders": {
+      "repository": "github.com/nimsforest/nimsforestfolders",
+      "description": "Folder and file organization tools"
+    }
+  },
+  "version": "1.0.0",
+  "updated": "2025-07-16"
+}

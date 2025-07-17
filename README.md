@@ -21,8 +21,11 @@ The package manager will guide you through installing Go if you don't have it.
 
 ### 1. Create Organization Workspace
 ```bash
+# Install workspace tool first
+nimsforestpm install workspace
+
 # Create organizational workspace structure
-nimsforestpm create-organization-workspace my-org
+nimsforestworkspace create my-org
 cd my-org-workspace
 ```
 
@@ -55,7 +58,6 @@ nimsforestpm status
 
 ### Core Commands
 ```bash
-nimsforestpm create-organization-workspace <name>  # Create workspace structure
 nimsforestpm install <tool> [tool2] [tool3]       # Install tools
 nimsforestpm install all                           # Install all tools
 nimsforestpm update [tool]                         # Update tools (all if no tool specified)
@@ -63,6 +65,12 @@ nimsforestpm status                                # Show installation status
 nimsforestpm hello                                 # System compatibility check
 nimsforestpm hello --dev                           # Developer mode compatibility check
 nimsforestpm validate <tool>                       # Validate tool installation
+```
+
+### Workspace Commands
+```bash
+nimsforestpm install workspace                     # Install workspace tool
+nimsforestworkspace create <name>                  # Create workspace structure
 ```
 
 ### Installation Examples
