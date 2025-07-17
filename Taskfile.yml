@@ -251,6 +251,32 @@ tasks:
       - echo "💾 Committing any pending changes..."
       - git add -A
       - 'git commit -m "Release {{.VERSION}}: Auto-commit pending changes" || echo "No changes to commit"'
+      - echo "📤 Pushing to origin..."
+      - 'git push origin main || (echo "⚠️  Push failed - you may need to push manually: git push origin main" && exit 0)'
+      - echo "📦 Building release artifacts..."
+      - task: release-artifacts
+      - echo "🎉 Creating GitHub release {{.VERSION}}..."
+      - 'gh release create {{.VERSION}} --title "Release {{.VERSION}}" --generate-notes --notes "Automated release with latest fixes and improvements."'
+      - echo "🧪 Testing release..."
+      - task: verify-release
+      - echo "✅ Release {{.VERSION}} completed successfully!"
+
+  release-local:
+    desc: "Complete release flow for local development - Usage: task release-local VERSION=v0.1.4"
+    cmds:
+      - |
+        if [ -z "{{.VERSION}}" ]; then
+          echo "❌ VERSION is required!"
+          echo "Run 'task suggest-version' to see suggested versions"
+          echo "Usage: task release-local VERSION=v0.1.4"
+          exit 1
+        fi
+      - echo "🚀 Starting local release {{.VERSION}}..."
+      - task: ci
+      - echo "💾 Committing any pending changes..."
+      - git add -A
+      - 'git commit -m "Release {{.VERSION}}: Auto-commit pending changes" || echo "No changes to commit"'
+      - echo "📤 Pushing to origin (will prompt for authentication)..."
       - git push origin main
       - echo "📦 Building release artifacts..."
       - task: release-artifacts
@@ -259,6 +285,31 @@ tasks:
       - echo "🧪 Testing release..."
       - task: verify-release
       - echo "✅ Release {{.VERSION}} completed successfully!"
+
+  release-no-push:
+    desc: "Release without pushing (manual push required) - Usage: task release-no-push VERSION=v0.1.4"
+    cmds:
+      - |
+        if [ -z "{{.VERSION}}" ]; then
+          echo "❌ VERSION is required!"
+          echo "Run 'task suggest-version' to see suggested versions"
+          echo "Usage: task release-no-push VERSION=v0.1.4"
+          exit 1
+        fi
+      - echo "🚀 Starting release {{.VERSION}} (no push)..."
+      - task: ci
+      - echo "💾 Committing any pending changes..."
+      - git add -A
+      - 'git commit -m "Release {{.VERSION}}: Auto-commit pending changes" || echo "No changes to commit"'
+      - 'echo "⚠️  Skipping push - you must run: git push origin main"'
+      - echo "📦 Building release artifacts..."
+      - task: release-artifacts
+      - echo "🎉 Creating GitHub release {{.VERSION}}..."
+      - 'gh release create {{.VERSION}} --title "Release {{.VERSION}}" --generate-notes --notes "Automated release with latest fixes and improvements."'
+      - echo "🧪 Testing release..."
+      - task: verify-release
+      - echo "✅ Release {{.VERSION}} completed successfully!"
+      - echo "📝 Don't forget to push - git push origin main"
 
   verify-release:
     desc: Download and test the latest release for current platform
